@@ -2,27 +2,45 @@
   main.c
   ACE4
 
-  Created by Nightpaws on 03/02/2014.
-  Copyright (c) 2014 Nightpaws. All rights reserved.
+  Created by Me, Myself and I on 03/02/2014.
+  Copyright (c) 2014 Me, Myself and I. All rights reserved.
 */
 
 #include <stdio.h>
 #include <string.h>
-
+#include <stdlib.h>
 #include "ace4.h"
+void command_selecter(char input){
+
+return;
+}
+
+void tokenizer(char* input){
+    char array[sizeof(input)+1];
+	strcpy(array, input);
+	strncpy(array, input, (sizeof(array) +1));
+    char *token = array;
+    char *pointr = input;
+
+    while ((token = strtok(pointr, " ")) != NULL)
+    {
+        printf("%s\n", token);
+        pointr = NULL;
+    }
+	return;
+}
 
 bool input_handler() {
     bool response = false;
-    
     char input[inputval];
     printf(">");
     fgets(input, in_size, stdin);
-
-    printf("User Input: %s\n",input);
-    if(strcmp("exit\n",input)){
-        response = true;
-        printf("\n response is %d",response);
-    }
+	tokenizer(input);
+	printf("User Input: %s\n",input);
+	if(strcmp("exit\n",input)){
+		response = true;
+		printf("\n response is printing strange here for some reason %d",response);
+	}
     
     return response;
 }
@@ -32,8 +50,6 @@ bool input_handler() {
 int main(int argc, char *argv[])
 {
     printf("Simple Shell\n");
-    printf("Created by Nightpaws on 03/02/2014\n");
-    printf("Copyright (c) 2014 Nightpaws. All rights reserved.\n\n");
     
     
     while (input_handler()==true){}
