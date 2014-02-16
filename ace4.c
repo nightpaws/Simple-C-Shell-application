@@ -16,7 +16,7 @@ return;
 }
 
 void tokenizer(char* input){
-    char array[sizeof(input)+1];
+    char array[256];
 	strcpy(array, input);
 	strncpy(array, input, (sizeof(array) +1));
     char *token = array;
