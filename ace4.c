@@ -1,10 +1,32 @@
 /*
   main.c
   ACE4
+/* Version History =====================================================================
+ * V0.1  07/02/2014 This is the first version of our program. Currently, we can take an
+ *                  input, we have an indicator icon “>” and can exit the program with
+ *                  “exit”.
+ *                  Ctrl+d exit remains to be implemented, as does strtok() tokenising, and
+ *                  input validation.
+ *
+ * v0.2 13/02/2014 The structure of the input handler function has been altered to now
+ *                  use a while loop. Copyright has been changed from default values from
+ *                  Xcode to reflecting the group name. Initially this while loop used
+ *                  multiple if>else if statements, however it now descends with break
+ *                  lines when an exit command is triggered. The boolean value for response
+ *                  has been renamed terminate to improve readability. If terminate is true,
+ *                  then the input handler function begins termination.
+ * ====================================================================================*/
 
   Created by Me, Myself and I on 03/02/2014.
   Copyright (c) 2014 Me, Myself and I. All rights reserved.
 */
+/*
+ main.c
+ ACE4 v0.2
+ 
+ Created by Group 6 on 03/02/2014.
+ Copyright (c) 2014 Group 6. All rights reserved.
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -50,6 +72,9 @@ bool input_handler() {
 int main(int argc, char *argv[])
 {
     printf("Simple Shell\n");
+    printf("Simple Shell v0.2\n");
+    printf("Created by CS210 Group 6 on 03/02/2014\n");
+    printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
     
     
     while (input_handler()==true){}
@@ -57,6 +82,7 @@ int main(int argc, char *argv[])
         
     printf("\n\nTerminated Execution.\n\n");
     
+    printf("\n\nTerminated Execution.\n\n");
     return 0;
     
     
