@@ -12,13 +12,18 @@
  *                  lines when an exit command is triggered. The boolean value for response
  *                  has been renamed terminate to improve readability. If terminate is true,
  *                  then the input handler function begins termination.
+ *
+ * v0.3 19/02/2014 This version has a functional tokenizer and accounts for all the required
+ *                  token types. It can handle up to 512 characters however it behaves in
+ *                  a strange way after 512 characters and outputs a second \n output if the
+ *                  512 boundary is exceeded.
  * ====================================================================================*/
 
 /*
  main.c
- ACE4 v0.2
+ ACE4 v0.3
  
- Created by Group 6 on 03/02/2014.
+ Created by Group 6 on 19/02/2014.
  Copyright (c) 2014 Group 6. All rights reserved.
  */
 
@@ -37,37 +42,49 @@ void command_selecter(char input){
 
 void tokenizer(char* input){
     char array[512];
-	strcpy(array, input);
-	strncpy(array, input, (sizeof(array) -1)); //doesn't like this
-    char *token = array;
-    char *pointr = input;
+    printf("\nLENGTH: %lu\n",strlen(input));
+
+    if(strlen(input)<=512){
+        strcpy(array, input);
+        strncpy(array, input, (sizeof(array) -1));
+        char *token = array;
+        char *pointr = input;
     
-    while ((token = strtok(pointr, " ")) != NULL)
-    {
-        printf("token: %s\n", token);
-        pointr = NULL;
-    }
+        while ((token = strtok(pointr, "<>| \t")) != NULL)
+        {
+            printf("token: '%s'\n", token);
+            pointr = NULL;
+        }
 	return;
+    }
+    else
+        printf("Invalid Input\n");
+    return;
 }
+
+
 
 bool input_handler() {
     bool terminate = false;
-    
     char input[inputval];
     
     while(terminate==false){
         printf(">");
-        if(fgets(input, in_size, stdin)!=NULL){
-            printf("User untokenised input is: %s\n",input);
-            
+        
+        if((fgets(input, in_size, stdin)!=NULL)){
+            /**remove the trailing newline*/
+            printf("User untokenised input is: '%s'\n",input);
             /*If user enters "exit" then jump out */
-            if(strcmp("exit\n",input)==false){
+            if(strcmp("exit",input)==false){
                 break;
             }
-            else
-            tokenizer(input);
-        }
-        else
+            else{
+
+            tokenizer(strtok(input,"\n"));
+                
+            }
+            }
+    else
         /*Jump out of while loop*/
             break;
     }
@@ -77,12 +94,10 @@ bool input_handler() {
 
 
 
-
-
 int main(int argc, char *argv[])
 {
-    printf("Simple Shell v0.2\n");
-    printf("Created by CS210 Group 6 on 03/02/2014\n");
+    printf("Simple Shell v0.3\n");
+    printf("Created by CS210 Group 6 on 19/02/2014\n");
     printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
     
     
