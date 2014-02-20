@@ -44,8 +44,8 @@ void tokenizer(char* input){
     char array[512];
     printf("\nLENGTH: %lu\n",strlen(input));
 
-    if(strlen(input)<=512){
-        strcpy(array, input);
+    
+         strtok(input,"\n");
         strncpy(array, input, (sizeof(array) -1));
         char *token = array;
         char *pointr = input;
@@ -55,10 +55,6 @@ void tokenizer(char* input){
             printf("token: '%s'\n", token);
             pointr = NULL;
         }
-	return;
-    }
-    else
-        printf("Invalid Input\n");
     return;
 }
 
@@ -72,15 +68,15 @@ bool input_handler() {
         printf(">");
         
         if((fgets(input, in_size, stdin)!=NULL)){
-            /**remove the trailing newline*/
+            strtok(input,"\n");
             printf("User untokenised input is: '%s'\n",input);
             /*If user enters "exit" then jump out */
             if(strcmp("exit",input)==false){
                 break;
             }
             else{
-
-            tokenizer(strtok(input,"\n"));
+                /**remove the trailing newline*/
+            tokenizer(input);
                 
             }
             }
