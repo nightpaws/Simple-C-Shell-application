@@ -19,7 +19,12 @@
 * 512 boundary is exceeded.
 * 
 *
-* v0.4 23/02/2014 Tokenizer now stores values into an array rather *than simply printing them out, command_selector now contains a simple *while loop showing the values being printer out so we can be sure *that the values are being stored in the correct locations. It *currently ontains commented out code showing how we plan to implement *command selection but this doesn't work currently.
+* v0.4 23/02/2014 Tokenizer now stores values into an array rather
+* than simply printing them out, command_selector now contains a simple 
+* while loop showing the values being printer out so we can be sure 
+* that the values are being stored in the correct locations. It 
+* currently ontains commented out code showing how we plan to implement 
+* command selection but this doesn't work currently.
 * ====================================================================================*/
 
 /*
