@@ -17,11 +17,14 @@
 * token types. It can handle up to 512 characters however it behaves in
 * a strange way after 512 characters and outputs a second \n output if the
 * 512 boundary is exceeded.
+* 
+*
+* v0.4 23/02/2014 Tokenizer now stores values into an array rather *than simply printing them out, command_selector now contains a simple *while loop showing the values being printer out so we can be sure *that the values are being stored in the correct locations. It *currently ontains commented out code showing how we plan to implement *command selection but this doesn't work currently.
 * ====================================================================================*/
 
 /*
 main.c
-ACE4 v0.3
+ACE4 v0.4
 Created by Group 6 on 19/02/2014.
 Copyright (c) 2014 Group 6. All rights reserved.
 */
