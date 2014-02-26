@@ -1,6 +1,6 @@
 /*defining boolean values*/
-#define true 1
-#define false 0
+#define true 0
+#define false 1
 typedef int bool;
 
 /*declare max size of input*/
@@ -11,4 +11,4 @@ typedef int bool;
 /* Max size of arg array */
 #define max_args 50
 /* Define number of chars per arg in array */
-#define max_chars 513
+#define max_chars 512

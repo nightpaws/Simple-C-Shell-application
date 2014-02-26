@@ -40,9 +40,12 @@ Copyright (c) 2014 Group 6. All rights reserved.
 #include <unistd.h>
 
 #include "ace4.h"
-char *array[max_args][max_chars];
+char array[max_args][max_chars];
+
 int ntokens;
-/*
+
+
+
 void cd(char tokens[max_args]){
     printf("cd has been selected\n");
     return;
@@ -88,59 +91,59 @@ void unalias(char tokens[max_args]){
     printf("unalias has been selected\n");
     return;
 }
-*/
 
 
 
 
-void command_selecter(){
-   /* if(strcmp("cd",array[0])==true)
+
+void command_selecter(char tokenArray[]){
+    printf("inside command sel\n");
+   if(strcmp("cd",&tokenArray[0])==true)
     {
-        cd(array[1]);
+        cd(&tokenArray[0]);
     }
-    else if(strcmp("pwd",array[0])==true)
+    else if(strcmp("pwd",&tokenArray[0])==true)
     {
-        pwd(array[1]);
+        pwd(&tokenArray[0]);
     }
-    else if(strcmp("getpath",array[0])==true)
+    else if(strcmp("getpath",&tokenArray[0])==true)
     {
-        getpath(array[0]);
+        getpath(&tokenArray[0]);
     }
-    else if(strcmp("setpath",array[0])==true)
+    else if(strcmp("setpath",&tokenArray[0])==true)
     {
-        setpath(array[0]);
+        setpath(&tokenArray[0]);
     }
-    else if(strcmp("history",array[0])==true)
+    else if(strcmp("history",&tokenArray[0])==true)
     {
-        history(array[0]);
+        history(&tokenArray[0]);
     }
-    else if(strcmp("!",array[0])==true)
+    else if(strcmp("!",&tokenArray[0])==true)
     {
-        runlast(array[0]);
+        runlast(&tokenArray[0]);
     }
-    else if(strcmp("alias",array[0])==true)
+    else if(strcmp("alias",&tokenArray[0])==true)
     {
-        if(array[0] != NULL){
-            alias(*array);
+        if(&array[0] != NULL){
+            alias(tokenArray);
         } else {
             printalias();
         }
     }
-    else if(strcmp("unalias",array[0])==true)
+    else if(strcmp("unalias",&tokenArray[0])==true)
     {
-        unalias(array[0]);
+        unalias(&tokenArray[0]);
     }
     else {
-         Just run the command and catch the error 
-        
+         //Just run the command and catch the error
+        printf("no input was processed\n");
     }
-*/
-
-
-    int i = 0;
+    
+   int i = 0;
+    
     while(i<ntokens){
-    printf("Token: '%s', counter is %d\n",array[i], i);
-    i = i+1;
+        printf("Token: '%s', counter is %d\n",array[i], i);
+        i = i+1;
 	}
     return;
 }
@@ -158,37 +161,37 @@ void tokenizer(char *input){
 	ntokens = ntokens + 1;
 	i = i + 1;
         }
+    command_selecter(*array);
     return;
 }
 
 
 
 bool input_handler() {
-    bool terminate = false;
+    bool terminate = true;
     char input[inputval];
     
-    while(terminate==false){
+    while(terminate==true){
         printf(">");
         
         if((fgets(input, in_size, stdin)!=NULL)){
             strtok(input,"\n");
             printf("User untokenised input is: '%s'\n",input);
             /*If user enters "exit" then jump out */
-            if(strcmp("exit",input)==false){
+            if(strcmp("exit",input)==true){
                 break;
             }
             else{
                 /**remove the trailing newline*/
-	    ntokens = 0;
+                ntokens = 0;
             tokenizer(input);
-            command_selecter();
             }
-            }
+        }
     else
         /*Jump out of while loop*/
             break;
     }
-    terminate = true;
+    terminate = false;
     return terminate;
 }
 
@@ -201,7 +204,7 @@ int main(int argc, char *argv[])
     printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
     
     
-    while (input_handler()==false){}
+    while (input_handler()==true){}
     
     
     printf("\n\nTerminated Execution.\n\n");
