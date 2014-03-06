@@ -33,7 +33,9 @@
 * main function rather than through a complicated heirarchy of processes that was causing
 * confusion and unexpected outputs. Fork() has been added and the ability to handle
 * external commands has been put in place by using the execvp() function.
-*
+* 
+* v0.5.1 06/03/2014 Quick fix to handle empty inputs. If statement surrounding command
+* selector to resolve (lldb) error. Added input to "Command not found" message.
 *
 * ====================================================================================*/
 
@@ -105,7 +107,7 @@ void unalias(char tokens[max_args]){
 
 void command_selecter(char *tokenArray[max_args]){
 
-   if(strcmp("cd",tokenArray[0])==true)
+    if(strcmp("cd",tokenArray[0])==true)
     {
         cd(tokenArray[0]);
     }
@@ -154,7 +156,7 @@ void command_selecter(char *tokenArray[max_args]){
         else if (pid == 0) {
             /* If fork() returns 0, we are in the child process. */
             if(execvp(tokenArray[0],tokenArray) == -1 ){
-                printf("Command not recognised.\n");
+                printf("%s: Command not found\n",tokenArray[0]);
             }
             exit(2);	/* execl() failed */
         }
@@ -174,7 +176,7 @@ void command_selecter(char *tokenArray[max_args]){
         
         /*take in the input, tokenise and store first 
          tokenised value in the array*/
-        inputstrings = strtok(input, " \n\t");
+        inputstrings = strtok(input, "<>| \n\t");
         array[0] = inputstrings;
         
         /*Whilst not the end of the file and input isn't null, take
@@ -182,7 +184,7 @@ void command_selecter(char *tokenArray[max_args]){
          in the array*/
         while(inputstrings != NULL && !feof(stdin)){
             i++;
-            inputstrings = strtok(NULL," \n\t");
+            inputstrings = strtok(NULL,"<>| \n\t");
             array[i] = inputstrings;
         }
         return array;
@@ -222,7 +224,9 @@ int main(int argc, char *argv[])
             }
             else{
                 tokenizer(input, array);
+                if(array[0] !=NULL){
                 command_selecter(array);
+                }
             }
         }
         else
