@@ -25,30 +25,41 @@
 * that the values are being stored in the correct locations. It 
 * currently ontains commented out code showing how we plan to implement 
 * command selection but this doesn't work currently.
+*
+* v0.5 06/03/2014 In this version we have refactored our code substantially. The main
+* method now contains the entirety of the input handler class which has been removed.
+* The global array we were using has now been moved into the main function, and parameter
+* passing has been completely redone to allow methods to pass parameters in and out of the
+* main function rather than through a complicated heirarchy of processes that was causing
+* confusion and unexpected outputs. Fork() has been added and the ability to handle
+* external commands has been put in place by using the execvp() function.
+*
+*
 * ====================================================================================*/
 
 /*
 main.c
-ACE4 v0.4
-Created by Group 6 on 19/02/2014.
+ACE4 v0.5
+Created by Group 6 on 06/03/2014.
 Copyright (c) 2014 Group 6. All rights reserved.
 */
-
-#include <stdio.h>
+#include <sys/types.h> /* pid_t */
+#include <sys/wait.h>  /* waitpid */
+#include <stdio.h> /* printf, perror */
 #include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <stdlib.h> /* exit */
+#include <unistd.h> /* _exit, fork */
 
-#include "ace4.h"
-char array[max_args][max_chars];
+#include "ace4.h" /*Our custom file*/
 
-int ntokens;
-
+/* Avoid Global Variables*/
 
 
+/*Functions to be called when called by the users
+ input matching the name of the function. These will
+ contain the code. */
 void cd(char tokens[max_args]){
     printf("cd has been selected\n");
-    return;
 }
 
 void pwd(char tokens[max_args]){
@@ -92,159 +103,134 @@ void unalias(char tokens[max_args]){
     return;
 }
 
+void command_selecter(char *tokenArray[max_args]){
 
-
-
-
-void command_selecter(char tokenArray[]){
-    printf("inside command sel\n");
-   if(strcmp("cd",&tokenArray[0])==true)
+   if(strcmp("cd",tokenArray[0])==true)
     {
-        cd(&tokenArray[0]);
+        cd(tokenArray[0]);
     }
-    else if(strcmp("pwd",&tokenArray[0])==true)
+    else if(strcmp("pwd",tokenArray[0])==true)
     {
-        pwd(&tokenArray[0]);
+        pwd(tokenArray[0]);
     }
-    else if(strcmp("getpath",&tokenArray[0])==true)
+    else if(strcmp("getpath",tokenArray[0])==true)
     {
-        getpath(&tokenArray[0]);
+        getpath(tokenArray[0]);
     }
-    else if(strcmp("setpath",&tokenArray[0])==true)
+    else if(strcmp("setpath",tokenArray[0])==true)
     {
-        setpath(&tokenArray[0]);
+        setpath(tokenArray[0]);
     }
-    else if(strcmp("history",&tokenArray[0])==true)
+    else if(strcmp("history",tokenArray[0])==true)
     {
-        history(&tokenArray[0]);
+        history(tokenArray[0]);
     }
-    else if(strcmp("!",&tokenArray[0])==true)
+    else if(strcmp("!",tokenArray[0])==true)
     {
-        runlast(&tokenArray[0]);
+        runlast(tokenArray[0]);
     }
-    else if(strcmp("alias",&tokenArray[0])==true)
+    else if(strcmp("alias",tokenArray[0])==true)
     {
-        if(&array[0] != NULL){
+        /*Code is non functional */
+        /* if(array[0] != NULL){
             alias(tokenArray);
         } else {
             printalias();
-        }
+        } */
     }
-    else if(strcmp("unalias",&tokenArray[0])==true)
+    else if(strcmp("unalias",tokenArray[0])==true)
     {
-        unalias(&tokenArray[0]);
+        unalias(tokenArray[0]);
     }
     else {
-         //Just run the command and catch the error
-        printf("no input was processed\n");
-    }
-    
-   int i = 0;
-    
-    while(i<ntokens){
-        printf("Token: '%s', counter is %d\n",array[i], i);
-        i = i+1;
-	}
-    return;
-}
-
-void tokenizer(char *input){
-    printf("\nLENGTH: %lu\n",strlen(input));
-    strtok(input,"\n");
-    char *token;
-    char *pointr = input;
-    int i = 0;
-    while ((token = strtok(pointr, "<>| \t")) != NULL)
-    {
-	strcpy(array[i], token);
-        pointr = NULL;
-	ntokens = ntokens + 1;
-	i = i + 1;
-        }
-    command_selecter(*array);
-    return;
-}
-
-
-
-bool input_handler() {
-    bool terminate = true;
-    char input[inputval];
-    
-    while(terminate==true){
-        printf(">");
+        pid_t pid;
+        pid = fork();
         
-        if((fgets(input, in_size, stdin)!=NULL)){
-            strtok(input,"\n");
-            printf("User untokenised input is: '%s'\n",input);
-            /*If user enters "exit" then jump out */
-            if(strcmp("exit",input)==true){
-                break;
-            }
-            else{
-                /**remove the trailing newline*/
-                ntokens = 0;
-            tokenizer(input);
-            }
+        if (pid == -1) {
+            /* If the fork() returns -1, an error has occurred. */
+            perror("Failed to fork process");
+            exit(EXIT_FAILURE);
         }
-    else
-        /*Jump out of while loop*/
-            break;
+        else if (pid == 0) {
+            /* If fork() returns 0, we are in the child process. */
+            if(execvp(tokenArray[0],tokenArray) == -1 ){
+                printf("Command not recognised.\n");
+            }
+            exit(2);	/* execl() failed */
+        }
+        else {
+           /* When fork() is positive. We're in the parent process */
+            int status;
+            (void)waitpid(pid, &status, 0);
+            /* return value is PID of new child process */
+        }
     }
-    terminate = false;
-    return terminate;
 }
+
+    
+    char** tokenizer(char input[inputval], char *array[max_args]){
+        char *inputstrings; /*current value to be tokenised*/
+        int i = 0; /*tokeniser*/
+        
+        /*take in the input, tokenise and store first 
+         tokenised value in the array*/
+        inputstrings = strtok(input, " \n\t");
+        array[0] = inputstrings;
+        
+        /*Whilst not the end of the file and input isn't null, take
+         in the input, tokenise and store first tokenised value
+         in the array*/
+        while(inputstrings != NULL && !feof(stdin)){
+            i++;
+            inputstrings = strtok(NULL," \n\t");
+            array[i] = inputstrings;
+        }
+        return array;
+    }
 
 
 
 int main(int argc, char *argv[])
 {
-    printf("Simple Shell v0.3\n");
-    printf("Created by CS210 Group 6 on 19/02/2014\n");
+    printf("Simple Shell v0.5\n");
+    printf("Created by CS210 Group 6 on 06/03/2014\n");
     printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
+    char *array[max_args];/* size 50 */
+    bool terminate = false; /* Always false */
+    char input[inputval];/* size 512 */
+    char *originalPath; /* to hold current directory at beginning of execution */
+    
+    /* Store the original path*/
+    originalPath = getenv("PATH");
+    printf("Original path is: %s\n",originalPath); /*testing line. Delete when done*/
+    
+    /* Set working directory to the home folder*/
+    chdir("/home/nightpaws");
     
     
-    while (input_handler()==true){}
-    
-    
+    /* Infinite Loop until highest break is reached*/
+    do {
+        printf(">");
+        
+        /* get the input and if it is not null tokenise it */
+        if((fgets(input, in_size, stdin)!=NULL)){
+            strtok(input,"\n");
+            /* If the input from the user is "exit" then
+             begin termination of the program */
+            if(strcmp("exit",input)==true){
+                break;
+            }
+            else{
+                tokenizer(input, array);
+                command_selecter(array);
+            }
+        }
+        else
+        /* Jump out of while loop*/
+            break;
+
+    } while (terminate ==false);
+
     printf("\n\nTerminated Execution.\n\n");
     return 0;
-    
-    
-    
-// char *get_line (char *string, size_t n, FILE *f);
-// {
-// char *p = fgets (string, n, f); //p = fgets (line, BUFFER_LENGTH, stdin);
-//
-// if (p != NULL) {
-// size_t last = strlen(string) - 1;
-//
-// if (string[last] == '\n') string[last] = '\0';
-// }
-// return p;
-// }
-// Find user home directory from the environment
-// Set current working directory to user home directory
-// Keep original path
-// Load
-// aliases
-// Load history
-// Do while shell has not terminated
-// Display prompt
-// Read and parse user input
-// If input is a history invocation then retrieve command from history
-// Else add command to history
-// If input is an alias then replace the alias with the origin
-// al command
-// If command is built
-// -
-// in invoke appropriate function
-// Else execute command as an external process
-// End while
-// Save history
-// Save aliases
-// Restore original path
-// Exit
-    
-
 }
