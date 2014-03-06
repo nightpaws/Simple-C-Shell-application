@@ -17,13 +17,13 @@
 * token types. It can handle up to 512 characters however it behaves in
 * a strange way after 512 characters and outputs a second \n output if the
 * 512 boundary is exceeded.
-* 
+*
 *
 * v0.4 23/02/2014 Tokenizer now stores values into an array rather
-* than simply printing them out, command_selector now contains a simple 
-* while loop showing the values being printer out so we can be sure 
-* that the values are being stored in the correct locations. It 
-* currently ontains commented out code showing how we plan to implement 
+* than simply printing them out, command_selector now contains a simple
+* while loop showing the values being printer out so we can be sure
+* that the values are being stored in the correct locations. It
+* currently ontains commented out code showing how we plan to implement
 * command selection but this doesn't work currently.
 *
 * v0.5 06/03/2014 In this version we have refactored our code substantially. The main
@@ -44,7 +44,7 @@ Created by Group 6 on 06/03/2014.
 Copyright (c) 2014 Group 6. All rights reserved.
 */
 #include <sys/types.h> /* pid_t */
-#include <sys/wait.h>  /* waitpid */
+#include <sys/wait.h> /* waitpid */
 #include <stdio.h> /* printf, perror */
 #include <string.h>
 #include <stdlib.h> /* exit */
@@ -56,14 +56,17 @@ Copyright (c) 2014 Group 6. All rights reserved.
 
 
 /*Functions to be called when called by the users
- input matching the name of the function. These will
- contain the code. */
+input matching the name of the function. These will
+contain the code. */
 void cd(char tokens[max_args]){
     printf("cd has been selected\n");
 }
 
 void pwd(char tokens[max_args]){
     printf("pwd has been selected\n");
+    char cwd[256];
+    getcwd(cwd, sizeof(cwd));
+    printf("Current directory is : %s\n",cwd);
     return;
 }
 
@@ -133,10 +136,10 @@ void command_selecter(char *tokenArray[max_args]){
     {
         /*Code is non functional */
         /* if(array[0] != NULL){
-            alias(tokenArray);
-        } else {
-            printalias();
-        } */
+alias(tokenArray);
+} else {
+printalias();
+} */
     }
     else if(strcmp("unalias",tokenArray[0])==true)
     {
@@ -172,14 +175,14 @@ void command_selecter(char *tokenArray[max_args]){
         char *inputstrings; /*current value to be tokenised*/
         int i = 0; /*tokeniser*/
         
-        /*take in the input, tokenise and store first 
-         tokenised value in the array*/
+        /*take in the input, tokenise and store first
+tokenised value in the array*/
         inputstrings = strtok(input, " \n\t");
         array[0] = inputstrings;
         
         /*Whilst not the end of the file and input isn't null, take
-         in the input, tokenise and store first tokenised value
-         in the array*/
+in the input, tokenise and store first tokenised value
+in the array*/
         while(inputstrings != NULL && !feof(stdin)){
             i++;
             inputstrings = strtok(NULL," \n\t");
@@ -192,22 +195,23 @@ void command_selecter(char *tokenArray[max_args]){
 
 int main(int argc, char *argv[])
 {
+
+    char *originalPath;
+    /*Store the original path*/
+    originalPath = getenv("PATH");
+    printf("Original path is: %s\n",originalPath);        
+    /*Set working directory to the home folder*/
+    chdir(getenv("HOME"));
+
     printf("Simple Shell v0.5\n");
     printf("Created by CS210 Group 6 on 06/03/2014\n");
     printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
     char *array[max_args];/* size 50 */
     bool terminate = false; /* Always false */
     char input[inputval];/* size 512 */
-    char *originalPath; /* to hold current directory at beginning of execution */
+
     
-    /* Store the original path*/
-    originalPath = getenv("PATH");
-    printf("Original path is: %s\n",originalPath); /*testing line. Delete when done*/
-    
-    /* Set working directory to the home folder*/
-    chdir("/home/nightpaws");
-    
-    
+
     /* Infinite Loop until highest break is reached*/
     do {
         printf(">");
@@ -216,7 +220,7 @@ int main(int argc, char *argv[])
         if((fgets(input, in_size, stdin)!=NULL)){
             strtok(input,"\n");
             /* If the input from the user is "exit" then
-             begin termination of the program */
+begin termination of the program */
             if(strcmp("exit",input)==true){
                 break;
             }
@@ -234,3 +238,5 @@ int main(int argc, char *argv[])
     printf("\n\nTerminated Execution.\n\n");
     return 0;
 }
+
+
