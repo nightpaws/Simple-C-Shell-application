@@ -177,15 +177,12 @@ printalias();
         char *inputstrings; /*current value to be tokenised*/
         int i = 0; /*tokeniser*/
         
-<<<<<<< HEAD
         /*take in the input, tokenise and store first
 tokenised value in the array*/
         inputstrings = strtok(input, " \n\t");
-=======
         /*take in the input, tokenise and store first 
          tokenised value in the array*/
         inputstrings = strtok(input, "<>| \n\t");
->>>>>>> 32e7eee33f501ab46f7e97db7cab713307da6238
         array[0] = inputstrings;
         
         /*Whilst not the end of the file and input isn't null, take
