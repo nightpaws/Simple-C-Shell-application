@@ -61,11 +61,33 @@ Copyright (c) 2014 Group 6. All rights reserved.
  input matching the name of the function. These will
  contain the code. */
 void cd(char tokens[max_args]){
-    printf("cd has been selected\n");
+    char cwd[256]; /*current working directory*/
+    printf("cd has been selected %s \n",tokens);
+    if(tokens == NULL){
+	/*change directory to home*/
+	printf("Setting directory to home\n");
+    	if(chdir(getenv("HOME")) == 0){
+		printf("Successfully changed directory to home\n");
+	}
+	else{
+		printf("cd failed\n");
+	}
+    }
+    else {
+	/*change directory to user specified location*/
+	printf("Changing directory\n");
+	if(chdir(tokens) == 0){
+		printf("Successfully changed directory\n");
+	}
+	else if(chdir(strcat(getcwd(cwd, sizeof(cwd)),tokens))){
+		printf("Incorrect directory supplied\n");
+	}
+    }
+    
 }
 
 void pwd(char tokens[max_args]){
-    char cwd[256]; /*current working directory*/
+        char cwd[256]; /*current working directory*/
         if (getcwd(cwd, sizeof(cwd)) == NULL)
             perror("getcwd() error");
         else
@@ -74,12 +96,19 @@ void pwd(char tokens[max_args]){
 }
 
 void getpath(char tokens[max_args]){
-    printf("getpath has been selected\n");
+    printf("The current path is: %s\n",getenv("PATH"));
     return;
 }
 
 void setpath(char tokens[max_args]){
     printf("setpath has been selected\n");
+    printf("New path will be : %s\n",tokens);
+    if(setenv("PATH",tokens,1) == 0){
+	printf("Successfully changed path\n");
+	}
+    else{
+	printf("Invalid path specified\n");
+	}
     return;
 }
 
@@ -113,7 +142,7 @@ void command_selecter(char *tokenArray[max_args]){
 
     if(strcmp("cd",tokenArray[0])==true)
     {
-        cd(tokenArray[0]);
+        cd(tokenArray[1]);
     }
     else if(strcmp("pwd",tokenArray[0])==true)
     {
@@ -125,13 +154,13 @@ void command_selecter(char *tokenArray[max_args]){
     }
     else if(strcmp("setpath",tokenArray[0])==true)
     {
-        setpath(tokenArray[0]);
+        setpath(tokenArray[1]);
     }
     else if(strcmp("history",tokenArray[0])==true)
     {
         history(tokenArray[0]);
     }
-    else if(strcmp("!",tokenArray[0])==true)
+    else if(strcmp("!!",tokenArray[0])==true)
     {
         runlast(tokenArray[0]);
     }
@@ -174,9 +203,9 @@ void command_selecter(char *tokenArray[max_args]){
 }
 
     
-    char** tokenizer(char input[inputval], char *array[max_args]){
-        char *inputstrings; /*current value to be tokenised*/
-        int i = 0; /*tokeniser*/
+char** tokenizer(char input[inputval], char *array[max_args]){
+       char *inputstrings; /*current value to be tokenised*/
+       int i = 0; /*tokeniser*/
         
         /*take in the input, tokenise and store first 
          tokenised value in the array*/
@@ -192,7 +221,7 @@ void command_selecter(char *tokenArray[max_args]){
             array[i] = inputstrings;
         }
         return array;
-    }
+}
 
 
 
@@ -239,7 +268,8 @@ int main(int argc, char *argv[])
 
     } while (terminate ==false);
 /**getsetenv here and on exit*/
-    setenv("HOME",originalPath,1);
+    setenv("PATH",originalPath,1);
+    printf("Path on leaving program: %s\n",getenv("PATH"));
     printf("\n\nTerminated Execution.\n\n");
     return 0;
 }
