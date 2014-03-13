@@ -63,12 +63,9 @@ Copyright (c) 2014 Group 6. All rights reserved.
  contain the code. */
 void cd(char tokens[max_args]){
     char cwd[256]; /*current working directory*/
-   // printf("cd has been selected %s \n",tokens);
     if(tokens == NULL){
 	/*change directory to home*/
-	//printf("Setting directory to home\n");
     	if(chdir(getenv("HOME")) == 0){
-	//	printf("Successfully changed directory to home\n");
 	}
 	else{
 		printf("cd failed\n");
@@ -76,7 +73,6 @@ void cd(char tokens[max_args]){
     }
     else {
 	/*change directory to user specified location*/
-//	printf("Changing directory\n");
 	if(chdir(tokens) == 0){
 		printf("Successfully changed directory\n");
 	}
@@ -100,20 +96,28 @@ void pwd(char *tokens[]){
     return;
 }
 
-void getpath(char tokens[max_args]){
+void getpath(char *tokens[]){
+    
+    if (tokens[1]!= NULL){
+        printf("getpath does not take parameters\n");
+    }
+    else
     printf("The current path is: %s\n",getenv("PATH"));
+    
+
+    
+    
     return;
 }
 
 void setpath(char *tokens[]){
-    printf("setpath has been selected\n");
     if(tokens[1] != NULL){
 	if(tokens[2] == NULL){
 	    	printf("New path will be : %s\n",tokens[1]);
-	    	if(setenv("PATH",tokens[1],1) == 0){
+                if(setenv("PATH",tokens[1],1) == 0){
 			printf("Successfully changed path\n");
 			}
-	    	else{
+                else{
 			printf("Invalid path specified\n");
 			}
 	}
@@ -165,7 +169,7 @@ void command_selecter(char *tokenArray[max_args]){
     }
     else if(strcmp("getpath",tokenArray[0])==true)
     {
-        getpath(tokenArray[0]);
+        getpath(tokenArray);
     }
     else if(strcmp("setpath",tokenArray[0])==true)
     {
