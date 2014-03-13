@@ -51,6 +51,7 @@ Copyright (c) 2014 Group 6. All rights reserved.
 #include <string.h>
 #include <stdlib.h> /* exit */
 #include <unistd.h> /* _exit, fork */
+#include <errno.h>
 
 #include "ace4.h" /*Our custom file*/
 
@@ -62,12 +63,12 @@ Copyright (c) 2014 Group 6. All rights reserved.
  contain the code. */
 void cd(char tokens[max_args]){
     char cwd[256]; /*current working directory*/
-    printf("cd has been selected %s \n",tokens);
+   // printf("cd has been selected %s \n",tokens);
     if(tokens == NULL){
 	/*change directory to home*/
-	printf("Setting directory to home\n");
+	//printf("Setting directory to home\n");
     	if(chdir(getenv("HOME")) == 0){
-		printf("Successfully changed directory to home\n");
+	//	printf("Successfully changed directory to home\n");
 	}
 	else{
 		printf("cd failed\n");
@@ -75,7 +76,7 @@ void cd(char tokens[max_args]){
     }
     else {
 	/*change directory to user specified location*/
-	printf("Changing directory\n");
+//	printf("Changing directory\n");
 	if(chdir(tokens) == 0){
 		printf("Successfully changed directory\n");
 	}
@@ -86,12 +87,16 @@ void cd(char tokens[max_args]){
     
 }
 
-void pwd(char tokens[max_args]){
+void pwd(char *tokens[]){
         char cwd[256]; /*current working directory*/
-        if (getcwd(cwd, sizeof(cwd)) == NULL)
+    if (getcwd(cwd, sizeof(cwd)) == NULL){
             perror("getcwd() error");
-        else
-            printf("current working directory is: %s\n", cwd);
+    }
+    else if (tokens[1]!= NULL){
+        printf("Cannot use parameters\n");
+    }
+    else
+        printf("current working directory is: %s\n", cwd);
     return;
 }
 
@@ -146,7 +151,7 @@ void command_selecter(char *tokenArray[max_args]){
     }
     else if(strcmp("pwd",tokenArray[0])==true)
     {
-        pwd(tokenArray[0]);
+        pwd(tokenArray);
     }
     else if(strcmp("getpath",tokenArray[0])==true)
     {
