@@ -105,15 +105,25 @@ void getpath(char tokens[max_args]){
     return;
 }
 
-void setpath(char tokens[max_args]){
+void setpath(char *tokens[]){
     printf("setpath has been selected\n");
-    printf("New path will be : %s\n",tokens);
-    if(setenv("PATH",tokens,1) == 0){
-	printf("Successfully changed path\n");
+    if(tokens[1] != NULL){
+	if(tokens[2] == NULL){
+	    	printf("New path will be : %s\n",tokens[1]);
+	    	if(setenv("PATH",tokens[1],1) == 0){
+			printf("Successfully changed path\n");
+			}
+	    	else{
+			printf("Invalid path specified\n");
+			}
 	}
+	else{
+	printf("Error: You have too many parameters\n");
+	}
+    }
     else{
-	printf("Invalid path specified\n");
-	}
+	printf("Error: You need to include a path\n");
+    }
     return;
 }
 
@@ -159,7 +169,7 @@ void command_selecter(char *tokenArray[max_args]){
     }
     else if(strcmp("setpath",tokenArray[0])==true)
     {
-        setpath(tokenArray[1]);
+        setpath(tokenArray);
     }
     else if(strcmp("history",tokenArray[0])==true)
     {
