@@ -61,24 +61,26 @@ Copyright (c) 2014 Group 6. All rights reserved.
 /*Functions to be called when called by the users
  input matching the name of the function. These will
  contain the code. */
-void cd(char tokens[max_args]){
+void cd(char *tokens[]){
     char cwd[256]; /*current working directory*/
-    if(tokens == NULL){
+    if(tokens[1] == NULL){
 	/*change directory to home*/
-    	if(chdir(getenv("HOME")) == 0){
-	}
-	else{
+    	if(chdir(getenv("HOME")) == 0){}
+        else{
 		printf("cd failed\n");
-	}
+        }
+    }
+    else if (tokens[2]!= NULL){
+        printf("Cannot use parameters\n");
     }
     else {
 	/*change directory to user specified location*/
-	if(chdir(tokens) == 0){
-		printf("Successfully changed directory\n");
-	}
-	else if(chdir(strcat(getcwd(cwd, sizeof(cwd)),tokens))){
-		printf("Incorrect directory supplied\n");
-	}
+        if(chdir(tokens[1]) == 0){
+            printf("Successfully changed directory\n");
+        }
+        else if(chdir(strcat(getcwd(cwd, sizeof(cwd)),tokens[1]))){
+            printf("Incorrect directory supplied\n");
+        }
     }
     
 }
@@ -161,7 +163,7 @@ void command_selecter(char *tokenArray[max_args]){
 
     if(strcmp("cd",tokenArray[0])==true)
     {
-        cd(tokenArray[1]);
+        cd(tokenArray);
     }
     else if(strcmp("pwd",tokenArray[0])==true)
     {
