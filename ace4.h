@@ -12,3 +12,6 @@ typedef int bool;
 #define max_args 50
 /* Define number of chars per arg in array */
 #define max_chars 512
+
+/*Define maximum size of history*/
+#define max_hist 19

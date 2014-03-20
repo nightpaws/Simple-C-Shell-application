@@ -61,25 +61,26 @@ Copyright (c) 2014 Group 6. All rights reserved.
 /*Functions to be called when called by the users
  input matching the name of the function. These will
  contain the code. */
-void cd(char *tokens[]){
-    char cwd[256]; /*current working directory*/
+void cd(char input[inputval],char *tokens[]){
+//    char cwd[256]; /*current working directory*/
     if(tokens[1] == NULL){
 	/*change directory to home*/
     	if(chdir(getenv("HOME")) == 0){}
         else{
-		printf("cd failed\n");
+		perror(getenv("HOME"));
         }
     }
     else if (tokens[2]!= NULL){
-        printf("Cannot use parameters\n");
+        printf("Too many parameters supplied\n");
     }
     else {
 	/*change directory to user specified location*/
         if(chdir(tokens[1]) == 0){
-            printf("Successfully changed directory\n");
+//            printf("Successfully changed directory\n");
         }
-        else if(chdir(strcat(getcwd(cwd, sizeof(cwd)),tokens[1]))){
-            printf("Incorrect directory supplied\n");
+        else
+        {
+            perror(input);
         }
     }
     
@@ -159,11 +160,11 @@ void unalias(char tokens[max_args]){
     return;
 }
 
-void command_selecter(char *tokenArray[max_args]){
+void command_selecter(char input[inputval], char *tokenArray[max_args]){
 
     if(strcmp("cd",tokenArray[0])==true)
     {
-        cd(tokenArray);
+        cd(input,tokenArray);
     }
     else if(strcmp("pwd",tokenArray[0])==true)
     {
@@ -246,19 +247,71 @@ char** tokenizer(char input[inputval], char *array[max_args]){
 
 
 
+//int main(int argc, char *argv[])
+//{
+//    printf("Simple Shell v0.5.2\n");
+//    printf("Created by CS210 Group 6 on 06/03/2014\n");
+//    printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
+//    char *array[max_args];/* size 50 */
+//    bool terminate = false; /* Always false */
+//    char input[inputval];/* size 512 */
+//    char *originalPath; /* to hold current directory at beginning of execution */
+//    
+//    /* Store the original path*/
+//    originalPath = getenv("PATH");
+//    printf("Original path is: %s\n",originalPath); /*testing line. Delete when done*/
+//    
+//    /* Set working directory to the home folder*/
+//    chdir(getenv("HOME"));
+//    
+//    
+//    /* Infinite Loop until highest break is reached*/
+//    do {
+//        printf(">");
+//        
+//        /* get the input and if it is not null tokenise it */
+//        if((fgets(input, in_size, stdin)!=NULL)){
+//            strtok(input,"\n");
+//            /* If the input from the user is "exit" then
+//             begin termination of the program */
+//            if(strcmp("exit",input)==true){
+//                break;
+//            }
+//            else{
+//                tokenizer(input, array);
+//                if(array[0] !=NULL){
+//                command_selecter(array);
+//                }
+//            }
+//        }
+//        else
+//        /* Jump out of while loop*/
+//            break;
+//
+//    } while (terminate ==false);
+///**getsetenv here and on exit*/
+//    setenv("PATH",originalPath,1);
+//    printf("Path on leaving program: %s\n",getenv("PATH"));
+//    printf("\n\nTerminated Execution.\n\n");
+//    return 0;
+//}
+
 int main(int argc, char *argv[])
 {
     printf("Simple Shell v0.5.2\n");
     printf("Created by CS210 Group 6 on 06/03/2014\n");
     printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
-    char *array[max_args];/* size 50 */
+    char *history[max_hist]; /* History array */
+    int histcounter = 0;
+    char *histchar = "!";
+    char *array[max_args];/* Size 50 */
     bool terminate = false; /* Always false */
-    char input[inputval];/* size 512 */
-    char *originalPath; /* to hold current directory at beginning of execution */
+    char input[inputval];    /* Size 512 */
+    char *originalPath; /* To hold current directory at beginning of execution */
+    char cwd[256];
     
     /* Store the original path*/
     originalPath = getenv("PATH");
-    printf("Original path is: %s\n",originalPath); /*testing line. Delete when done*/
     
     /* Set working directory to the home folder*/
     chdir(getenv("HOME"));
@@ -266,29 +319,43 @@ int main(int argc, char *argv[])
     
     /* Infinite Loop until highest break is reached*/
     do {
-        printf(">");
+        printf("%s >",getcwd(cwd, sizeof(cwd)));
         
         /* get the input and if it is not null tokenise it */
         if((fgets(input, in_size, stdin)!=NULL)){
             strtok(input,"\n");
+            
+            char inputunchanged[inputval];
+            for (int i=0;i<sizeof(input);i++){
+                inputunchanged[i] = input[i];
+            }
+            
             /* If the input from the user is "exit" then
              begin termination of the program */
             if(strcmp("exit",input)==true){
                 break;
             }
             else{
+                if(strncmp(histchar, input, 1) == 0){ /* If this returns 0, the first char in the input is a ! */
+//                    printf("Not added to history\n");
+                }
+                else{
+                    history[histcounter] = input;
+//                    printf("History location %d: %s\n",histcounter,history[histcounter]);
+                    histcounter = histcounter + 1;
+                }
                 tokenizer(input, array);
                 if(array[0] !=NULL){
-                command_selecter(array);
+                    command_selecter(inputunchanged,array);
                 }
             }
         }
         else
         /* Jump out of while loop*/
             break;
-
+        
     } while (terminate ==false);
-/**getsetenv here and on exit*/
+    /**getsetenv here and on exit*/
     setenv("PATH",originalPath,1);
     printf("Path on leaving program: %s\n",getenv("PATH"));
     printf("\n\nTerminated Execution.\n\n");
