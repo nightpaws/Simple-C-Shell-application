@@ -41,7 +41,7 @@
 
 /*
 main.c
-ACE4 v0.6.0
+ACE4 v0.6.1
 Created by Group 6 on 06/03/2014.
 Copyright (c) 2014 Group 6. All rights reserved.
 */
@@ -256,57 +256,6 @@ char** tokenizer(char input[inputval], char *array[max_args]){
         }
         return array;
 }
-
-
-
-//int main(int argc, char *argv[])
-//{
-//    printf("Simple Shell v0.5.2\n");
-//    printf("Created by CS210 Group 6 on 06/03/2014\n");
-//    printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
-//    char *array[max_args];/* size 50 */
-//    bool terminate = false; /* Always false */
-//    char input[inputval];/* size 512 */
-//    char *originalPath; /* to hold current directory at beginning of execution */
-//    
-//    /* Store the original path*/
-//    originalPath = getenv("PATH");
-//    printf("Original path is: %s\n",originalPath); /*testing line. Delete when done*/
-//    
-//    /* Set working directory to the home folder*/
-//    chdir(getenv("HOME"));
-//    
-//    
-//    /* Infinite Loop until highest break is reached*/
-//    do {
-//        printf(">");
-//        
-//        /* get the input and if it is not null tokenise it */
-//        if((fgets(input, in_size, stdin)!=NULL)){
-//            strtok(input,"\n");
-//            /* If the input from the user is "exit" then
-//             begin termination of the program */
-//            if(strcmp("exit",input)==true){
-//                break;
-//            }
-//            else{
-//                tokenizer(input, array);
-//                if(array[0] !=NULL){
-//                command_selecter(array);
-//                }
-//            }
-//        }
-//        else
-//        /* Jump out of while loop*/
-//            break;
-//
-//    } while (terminate ==false);
-///**getsetenv here and on exit*/
-//    setenv("PATH",originalPath,1);
-//    printf("Path on leaving program: %s\n",getenv("PATH"));
-//    printf("\n\nTerminated Execution.\n\n");
-//    return 0;
-//}
 
 int main(int argc, char *argv[])
 {
