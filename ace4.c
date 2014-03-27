@@ -41,7 +41,7 @@
 
 /*
 main.c
-ACE4 v0.5.2
+ACE4 v0.6.0
 Created by Group 6 on 06/03/2014.
 Copyright (c) 2014 Group 6. All rights reserved.
 */
@@ -134,12 +134,24 @@ void setpath(char *tokens[]){
     return;
 }
 
-void history(char tokens[max_args]){
-    printf("history has been selected\n");
+void history(char *tokens[], char *history[]){
+    int i = 0;
+    if(history[i] == 0){
+	printf("History is empty\n");
+    }
+    else{
+	    while(history[i] != 0){
+		printf("%d. %s\n",(i+1),history[i]);
+		i = i + 1;
+		if(i == max_hist){
+			break;
+		}
+    	}
+    }
     return;
 }
 
-void runlast(char tokens[max_args]){
+void runlast(char *tokens[max_args], char *history[max_hist]){
     // TODO add in special case for !! commands
     printf("runlast has been selected\n");
     return;
@@ -160,7 +172,7 @@ void unalias(char tokens[max_args]){
     return;
 }
 
-void command_selecter(char input[inputval], char *tokenArray[max_args]){
+void command_selecter(char input[inputval], char *tokenArray[max_args], char *histArray[max_hist]){
 
     if(strcmp("cd",tokenArray[0])==true)
     {
@@ -180,11 +192,11 @@ void command_selecter(char input[inputval], char *tokenArray[max_args]){
     }
     else if(strcmp("history",tokenArray[0])==true)
     {
-        history(tokenArray[0]);
+        history(tokenArray,histArray);
     }
     else if(strcmp("!!",tokenArray[0])==true)
     {
-        runlast(tokenArray[0]);
+        runlast(tokenArray,histArray);
     }
     else if(strcmp("alias",tokenArray[0])==true)
     {
@@ -301,9 +313,8 @@ int main(int argc, char *argv[])
     printf("Simple Shell v0.5.2\n");
     printf("Created by CS210 Group 6 on 06/03/2014\n");
     printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
-    char *history[max_hist]; /* History array */
+    char *history[max_hist] = {0}; /* History array */
     int histcounter = 0;
-    char *histchar = "!";
     char *array[max_args];/* Size 50 */
     bool terminate = false; /* Always false */
     char input[inputval];    /* Size 512 */
@@ -326,27 +337,55 @@ int main(int argc, char *argv[])
             strtok(input,"\n");
             
             char inputunchanged[inputval];
-            for (int i=0;i<sizeof(input);i++){
+	    int i;
+            for (i=0;i<sizeof(input);i++){
                 inputunchanged[i] = input[i];
             }
-            
+           
             /* If the input from the user is "exit" then
              begin termination of the program */
             if(strcmp("exit",input)==true){
                 break;
             }
             else{
-                if(strncmp(histchar, input, 1) == 0){ /* If this returns 0, the first char in the input is a ! */
-//                    printf("Not added to history\n");
-                }
+                if(strncmp("!", input, 1) != 0 && strncmp("history", input, 512) != 0 ){ 
+		/* If this returns 0, the first char in the input is a ! or the input is "history" */
+			history[histcounter] = strdup(input);
+			histcounter = histcounter + 1;
+			if(histcounter%20==0){
+				histcounter = 0;
+			}
+		}
                 else{
-                    history[histcounter] = input;
-//                    printf("History location %d: %s\n",histcounter,history[histcounter]);
-                    histcounter = histcounter + 1;
+			if(strncmp("history", input, 512) != 0){
+				int length = strlen(input);
+				char *locstr = (char *) malloc(2);
+				if (length > 1){
+					strcat(locstr, &input[1]);
+					int location = atoi(locstr);
+					if(location>0 && location <21){
+						location = location - 1;
+						if(history[location] != NULL){
+							strcpy(input,history[location]);
+							printf("History command is: %s\n",input);
+						}
+						else{
+							printf("There is no command in this array location\n");
+						}
+					}
+					else{
+						printf("The number following ! must be between 0 and 19\n");
+					}
+				}
+				else{
+					printf("Enter a number after ! to show the command you wish to run\n");
+				}
+
+			}			
                 }
-                tokenizer(input, array);
-                if(array[0] !=NULL){
-                    command_selecter(inputunchanged,array);
+		tokenizer(input, array);
+		if(array[0] !=NULL){
+                	command_selecter(inputunchanged,array,history);
                 }
             }
         }

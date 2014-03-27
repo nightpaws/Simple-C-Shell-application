@@ -14,4 +14,4 @@ typedef int bool;
 #define max_chars 512
 
 /*Define maximum size of history*/
-#define max_hist 19
+#define max_hist 20
