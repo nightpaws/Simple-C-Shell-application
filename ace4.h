@@ -15,3 +15,6 @@ typedef int bool;
 
 /*Define maximum size of history*/
 #define max_hist 20
+
+/*Define maximum number of aliases*/
+#define max_alias 10
