@@ -55,13 +55,6 @@ Copyright (c) 2014 Group 6. All rights reserved.
 
 #include "ace4.h" /*Our custom file*/
 
-/* Avoid Global Variables*/
-
-struct alias{
-    char alias;
-    char command[inputval];
-};
-
 /*Functions to be called when called by the users
  input matching the name of the function. These will
  contain the code. */
@@ -175,22 +168,73 @@ void runlast(char *tokens[max_args], char *history[max_hist]){
     return;
 }
 
-void alias(char tokens[max_args]){
-    printf("alias has been selected\n");
+void alias(char *tokens[max_args], char *alias[max_alias][2]){
+
+	if (tokens[1] == NULL){
+		int i;
+		int nullCounter = 0;
+		for (i = 0; i < max_alias; i++){
+			if(alias[i][0] != NULL){
+				printf("%s\t%s \n", alias[i][0], alias[i][1]);
+			}
+			else{
+				nullCounter = nullCounter + 1;
+			}
+			if(nullCounter == max_alias){
+				printf("There are no alaises added \n");
+			}
+		}
+		return;
+	}
+	
+	// add alias
+	
     return;
 }
 
-void printalias(){
-    printf("printalias has been selected\n");
+void unalias(char *tokens[max_args], char *alias[max_alias][2]){
+    
+	if (tokens[1] == NULL){
+		printf("Error: No alaises is provided. \n");
+		return;
+	}
+	int i;
+	int index;
+	char* command = tokens[1];
+	bool found = false;
+	for (i = 0; i < max_alias; i++){
+		if (alias[i][0] != NULL){
+			if(strcmp(command, alias[i][0]) == true){
+				alias[i][0] = NULL;
+				alias[i][1] = NULL;
+				index = i;
+				found = true;
+			}
+		}
+        
+	}
+	if (found == false){
+		printf("Error: The alias does not exist. \n");
+		return;
+	}
+	else{
+		while(index<(max_alias-1)){
+			alias[index][0] = alias[index+1][0];
+			alias[index][1] = alias[index+1][1];
+			index++;
+		}
+		alias[max_alias-1][0] = NULL;
+		alias[max_alias-1][1] = NULL;
+        
+		for (i = 0; i < max_alias; i++){
+            printf("%s\t%s  \n",alias[i][0], alias[i][1]);
+		}
+	}
     return;
+    
 }
 
-void unalias(char tokens[max_args]){
-    printf("unalias has been selected\n");
-    return;
-}
-
-void command_selecter(char input[inputval], char *tokenArray[max_args], char *histArray[max_hist], int histcounter){
+void command_selecter(char input[inputval], char *tokenArray[max_args], char *histArray[max_hist], int histcounter, char *aliasArray[max_alias][2]){
 
     if(strcmp("cd",tokenArray[0])==true)
     {
@@ -224,10 +268,11 @@ void command_selecter(char input[inputval], char *tokenArray[max_args], char *hi
         } else {
             printalias();
         } */
+		alias(tokenArray,aliasArray);
     }
     else if(strcmp("unalias",tokenArray[0])==true)
     {
-        unalias(tokenArray[0]);
+        unalias(tokenArray,aliasArray);
     }
     else {
         pid_t pid;
@@ -287,6 +332,7 @@ int main(int argc, char *argv[])
     char input[inputval];    /* Size 512 */
     char *originalPath; /* To hold current directory at beginning of execution */
     char cwd[256];
+	char *alias[max_alias][2] = {{0}}; /* 2 dimensional array to hold aliases*/
     
     /* Store the original path*/
     originalPath = getenv("PATH");
@@ -310,13 +356,23 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("No previous history exists, a new history will be created upon exit.");
+        printf("No previous history exists, a new history will be created upon exit.\n");
     }
-//    int j;
-//    for (j = 0; j < 5; j++){
-//        printf("%d %s \n", j, history[j]);
-//    }
+
     fclose ( fileread );
+    
+    
+    //fill alias array for testing purposes
+	alias[0][0] = "he"; alias[0][1] = "lsf";
+	alias[1][0] = "michael"; alias[1][1] = "mols";
+	alias[2][0] = "james";alias[2][1] = "white";
+	alias[3][0] = "bristol";alias[3][1] = "city";
+	alias[4][0] = "raith";alias[4][1] = "rovers";
+	alias[5][0] = "bish";alias[5][1] = "bash";
+	alias[6][0] = "zander";alias[6][1] = "diamond";
+	alias[7][0] = "dinamo";alias[7][1] = "bucharest";
+	alias[8][0] = "john";alias[8][1] = "bishop";
+	alias[9][0] = "melted";alias[9][1] = "cheese";
     
     /* Infinite Loop until highest break is reached*/
     do {
@@ -406,7 +462,7 @@ int main(int argc, char *argv[])
                 }
                 tokenizer(input, array);
                 if(array[0] !=NULL){
-                	command_selecter(inputunchanged,array,history,histcounter);
+                	command_selecter(inputunchanged,array,history,histcounter,alias);
                 }
             }
         }
