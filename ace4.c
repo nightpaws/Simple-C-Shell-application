@@ -41,8 +41,8 @@
 
 /*
 main.c
-ACE4 v0.6.5
-Created by Group 6 on 02/04/2014.
+ACE4 v0.8.5
+Created by Group 6 on 13/04/2014.
 Copyright (c) 2014 Group 6. All rights reserved.
 */
 #include <sys/types.h> /* pid_t */
@@ -163,46 +163,84 @@ void history(char *tokens[], char *history[], int histcounter){
 
 
 void runlast(char *tokens[max_args], char *history[max_hist]){
-    // TODO add in special case for !! commands
+    /* TODO add in special case for !! commands*/
     printf("runlast has been selected\n");
     return;
 }
 
 void alias(char *tokens[max_args], char *alias[max_alias][2]){
-
-	if (tokens[1] == NULL){
-		int i;
-		int nullCounter = 0;
-		for (i = 0; i < max_alias; i++){
-			if(alias[i][0] != NULL){
+	int i;
+	int nullCounter = 0; 
+	for (i = 0; i < max_alias; i++){     //works out the number of null elements in the alias array
+		if(alias[i][0] == NULL){
+			nullCounter = nullCounter + 1;
+		}
+	}
+	if (tokens[1] == NULL){				// if only 'alias' is entered...
+		if(nullCounter == max_alias){
+			printf("There are no aliases added \n");
+		}
+		else{
+			for (i = 0; (i < (max_alias-nullCounter)); i++){
 				printf("%s\t%s \n", alias[i][0], alias[i][1]);
-			}
-			else{
-				nullCounter = nullCounter + 1;
-			}
-			if(nullCounter == max_alias){
-				printf("There are no alaises added \n");
 			}
 		}
 		return;
 	}
-	
-	// add alias
-	
+	else{
+		if(tokens[2] == NULL){
+			printf("Error: Incorrect parameters provided to alias. Specify <command2>\n");
+			return;
+		}
+		char* command = tokens[1];
+		char command2[512] = "";
+		int tokensCounter = 0;
+		int index;
+		int i;
+		bool exists = false;
+		
+		while (tokens[tokensCounter] != NULL){		// works out the number of tokens in the token array
+			tokensCounter ++;
+		}
+		
+		for (index = 2; index < tokensCounter; index++){	// concatenates all the tokens (except 'alias' and <command1>)
+			strcat(command2, tokens[index]);
+			strcat(command2, " ");
+		}
+		strcat(command2, "\0");
+		
+		for (i = 0; (i < (max_alias-nullCounter)); i++){
+				if(strcmp(command, alias[i][0]) == true){
+					printf("Alias already exists. Overwriting.\n");
+					alias[i][1] =strdup(command2);
+					exists = true;
+				}
+		}
+		if((nullCounter == 0) && (exists == false)){
+			printf("No more aliases can be added \n");
+		}
+		else{
+			if ((exists == false)&&(nullCounter != 0)){	//add new alias to the Array
+				alias[max_alias-nullCounter][0] =strdup(command);
+				alias[max_alias-nullCounter][1] =strdup(command2);
+			}
+		}
+	}
     return;
 }
 
 void unalias(char *tokens[max_args], char *alias[max_alias][2]){
-    
+
 	if (tokens[1] == NULL){
-		printf("Error: No alaises is provided. \n");
+		printf("Error: No alias provided. \n");
 		return;
 	}
+	
 	int i;
 	int index;
 	char* command = tokens[1];
 	bool found = false;
-	for (i = 0; i < max_alias; i++){
+	for (i = 0; i < max_alias; i++){			// go through array to find alias
 		if (alias[i][0] != NULL){
 			if(strcmp(command, alias[i][0]) == true){
 				alias[i][0] = NULL;
@@ -211,27 +249,22 @@ void unalias(char *tokens[max_args], char *alias[max_alias][2]){
 				found = true;
 			}
 		}
-        
+
 	}
 	if (found == false){
 		printf("Error: The alias does not exist. \n");
 		return;
 	}
 	else{
-		while(index<(max_alias-1)){
-			alias[index][0] = alias[index+1][0];
+		while(index<(max_alias-1)){					
+			alias[index][0] = alias[index+1][0];		//shift array so there are no gaps
 			alias[index][1] = alias[index+1][1];
 			index++;
 		}
-		alias[max_alias-1][0] = NULL;
+		alias[max_alias-1][0] = NULL;					
 		alias[max_alias-1][1] = NULL;
-        
-		for (i = 0; i < max_alias; i++){
-            printf("%s\t%s  \n",alias[i][0], alias[i][1]);
-		}
 	}
     return;
-    
 }
 
 void command_selecter(char input[inputval], char *tokenArray[max_args], char *histArray[max_hist], int histcounter, char *aliasArray[max_alias][2]){
@@ -262,12 +295,6 @@ void command_selecter(char input[inputval], char *tokenArray[max_args], char *hi
     }
     else if(strcmp("alias",tokenArray[0])==true)
     {
-        /*Code is non functional */
-        /* if(array[0] != NULL){
-            alias(tokenArray);
-        } else {
-            printalias();
-        } */
 		alias(tokenArray,aliasArray);
     }
     else if(strcmp("unalias",tokenArray[0])==true)
@@ -303,12 +330,13 @@ void command_selecter(char input[inputval], char *tokenArray[max_args], char *hi
 char** tokenizer(char input[inputval], char *array[max_args]){
        char *inputstrings; /*current value to be tokenised*/
        int i = 0; /*tokeniser*/
-        
-        /*take in the input, tokenise and store first 
+
+        /*take in the input, tokenise and store first
          tokenised value in the array*/
         inputstrings = strtok(input, "<>| \n\t");
+
         array[0] = inputstrings;
-        
+    
         /*Whilst not the end of the file and input isn't null, take
          in the input, tokenise and store first tokenised value
          in the array*/
@@ -322,8 +350,8 @@ char** tokenizer(char input[inputval], char *array[max_args]){
 
 int main(int argc, char *argv[])
 {
-    printf("Simple Shell v0.5.2\n");
-    printf("Created by CS210 Group 6 on 06/03/2014\n");
+    printf("Simple Shell v0.8.5\n");
+    printf("Created by CS210 Group 6 on 13/04/2014\n");
     printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
     char *history[max_hist] = {0}; /* History array */
     int histcounter = 0;
@@ -333,7 +361,6 @@ int main(int argc, char *argv[])
     char *originalPath; /* To hold current directory at beginning of execution */
     char cwd[256];
 	char *alias[max_alias][2] = {{0}}; /* 2 dimensional array to hold aliases*/
-    
     /* Store the original path*/
     originalPath = getenv("PATH");
     
@@ -343,36 +370,23 @@ int main(int argc, char *argv[])
     
     /*Restore history from file*/
     char *filename = strcat(getcwd(cwd,sizeof(cwd)),"/.hist_list");  /*Set history file to be from home directory*/
-    
     FILE *fileread = fopen ( filename, "r" );
     if (!fileread==true)
     {
         char line [512];
-        while ( (fgets ( line, sizeof line, fileread ) != NULL) && (histcounter < 20)) /* read a line */
+ 
+        while ( (fgets ( line, sizeof line, fileread ) != NULL) && (histcounter < 20)) // read a line
         {
             history[histcounter] = strdup(strtok(line,"\n"));
-            histcounter = (histcounter +1)%20;
+            histcounter++;
         }
+    	fclose ( fileread );
     }
     else
     {
-        printf("No previous history exists, a new history will be created upon exit.\n");
-    }
+	printf("No previous history exists, a new history will be created upon exit.\n");
 
-    fclose ( fileread );
-    
-    
-    //fill alias array for testing purposes
-	alias[0][0] = "he"; alias[0][1] = "lsf";
-	alias[1][0] = "michael"; alias[1][1] = "mols";
-	alias[2][0] = "james";alias[2][1] = "white";
-	alias[3][0] = "bristol";alias[3][1] = "city";
-	alias[4][0] = "raith";alias[4][1] = "rovers";
-	alias[5][0] = "bish";alias[5][1] = "bash";
-	alias[6][0] = "zander";alias[6][1] = "diamond";
-	alias[7][0] = "dinamo";alias[7][1] = "bucharest";
-	alias[8][0] = "john";alias[8][1] = "bishop";
-	alias[9][0] = "melted";alias[9][1] = "cheese";
+    }
     
     /* Infinite Loop until highest break is reached*/
     do {
@@ -431,10 +445,8 @@ int main(int argc, char *argv[])
                         }
                         else{
                             long length = strlen(input);
-                            char *locstr = (char *) malloc(2);
                             if (length > 1){
-                                strcat(locstr, &input[1]); /*Removes ! from input to get command number */
-                                int location = atoi(locstr); /*Converts char to int */
+                                int location = atoi(&input[1]); /*Converts char to int */
                                 if(location>0 && location <21){
                                     location = location - 1;
                                     if(history[location] != NULL){
@@ -460,7 +472,22 @@ int main(int argc, char *argv[])
                         }
                     }
                 }
-                tokenizer(input, array);
+            
+                /*Handle the aliasing--------------*/
+                int i;
+                for(i = 0;i<10;i++){
+                    if(alias[i][0]!=NULL){
+                        if(strcmp(input,alias[i][0])==0){
+                            /*command found in aliases*/
+                            
+                            strcpy(input, alias[i][1]);
+                            //input = alias[i][1];
+                            break;
+                        }
+                    }
+                }
+                    tokenizer(input, array);
+
                 if(array[0] !=NULL){
                 	command_selecter(inputunchanged,array,history,histcounter,alias);
                 }
@@ -483,7 +510,7 @@ int main(int argc, char *argv[])
     int i = 0;
     while(history[i] != 0){
         fprintf(filewrite,"%s\n",history[i]);
-        i = (i + 1)%20;
+        i++;
         if(i == max_hist){
             break;
         }
