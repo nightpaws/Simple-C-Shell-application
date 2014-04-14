@@ -1,4 +1,41 @@
-/* Version History =====================================================================
+/***************************************************************************************************************
+ *
+ * Filename: ace4.c
+ *
+ * Synopsis: Simple Shell Application
+ *
+ * This is an implementation of ACE 4, a Simple Linux Shell application which
+ * allows the user to perform various built in tasks whilst also allowing the execution of external
+ * system commands where none have been coded in the application. The program prompts the user for
+ * an input, then checks the history to see if they are invoking a previous command. It is then
+ * compared against the list of aliases to check if the command should execute a different command.
+ * After this, the command is tokenised and passed to the command selector which either executes
+ * the internal command if one exists, or fork a process to run the command externally. The program
+ * then loops around to prompt for further input until the user types 'exit' or presses ctrl+d.
+ *
+ * GitHub Repository: https://github.com/adamus1red/scaling-octo-avenger
+ * 
+ * Authors:
+ *      Craig Morrison, Reg no: 201247913
+ *      Stewart Key, Reg no: 201240385
+ *      Adam McGhie, Reg no: 201240207
+ *      Liam Diamond, Reg no: 201210681
+ *
+ * Group:
+ *      Group 6
+ *
+ * Promise: I confirm that this submission is all my own work.
+ *
+ *            (Craig Morrison)	__________________________________________
+ *               (Stewart Key)	__________________________________________
+ *               (Adam McGhie)	__________________________________________
+ *              (Liam Diamond)	__________________________________________
+ *
+ * Version: See VERSION below
+ *
+ **************************************************************************************************************/
+
+/* Version History =============================================================================================
 * V0.1 07/02/2014 This is the first version of our program. Currently, we can take an
 * input, we have an indicator icon “>” and can exit the program with
 * “exit”.
@@ -13,20 +50,24 @@
 * has been renamed terminate to improve readability. If terminate is true,
 * then the input handler function begins termination.
 *
-* v0.3 19/02/2014 This version has a functional tokenizer and accounts for all the required
+* v0.2.1 19/02/2014 This version has a functional tokenizer and accounts for all the required
 * token types. It can handle up to 512 characters however it behaves in
 * a strange way after 512 characters and outputs a second \n output if the
 * 512 boundary is exceeded.
-* 
 *
-* v0.4 23/02/2014 Tokenizer now stores values into an array rather
+* v0.2.2 23/02/2014 Tokenizer now stores values into an array rather
 * than simply printing them out, command_selector now contains a simple 
 * while loop showing the values being printer out so we can be sure 
 * that the values are being stored in the correct locations. It 
 * currently ontains commented out code showing how we plan to implement 
 * command selection but this doesn't work currently.
 *
-* v0.5 06/03/2014 In this version we have refactored our code substantially. The main
+* v0.2.3 26/02/2014 Our boolean definition has been reversed in order to comply with the
+* logic of /most/ C functions and return values. We also rectified the mistype of max_chars
+* which had been given the value of 513 instead of 512. the tokenArray was incorrectly
+* initialised as an array of pointers which has been fixed and all references have also been rectified.
+*
+* v0.2.4 06/03/2014 In this version we have refactored our code substantially. The main
 * method now contains the entirety of the input handler class which has been removed.
 * The global array we were using has now been moved into the main function, and parameter
 * passing has been completely redone to allow methods to pass parameters in and out of the
@@ -34,10 +75,71 @@
 * confusion and unexpected outputs. Fork() has been added and the ability to handle
 * external commands has been put in place by using the execvp() function.
 * 
-* v0.5.1 06/03/2014 Quick fix to handle empty inputs. If statement surrounding command
-* selector to resolve (lldb) error. Added input to "Command not found" message.
+* v0.2.5 06/03/2014 Quick fix to handle empty inputs. If statement surrounding command
+* selector to resolve (lldb) debugger error. Added input to "Command not found" message. The parameters
+* used to tokenise have been readded as they were removed earlier in error. ("<>| \n \t"). Handling
+* of NULL Strings has also been included in the Command Selector.
+* 
+* v0.2.6 06/03/2014 Internal command pwd has been introduced along with the ability to store the
+* original path.
 *
-* ====================================================================================*/
+* v0.2.6.5 06/03/2014 Reversion of incorrect GitHub commit. Introduced lots of conflicting information,
+* duplicate code and compilation errors due to user error. Rectified by reuploading v0.2.5 then
+* manually transferring changes from v0.2.6 into this code.
+*
+* v0.3 6/03/2014 Setenv() is now used to set and restore the users path variable upon
+* launch and exit of the application.
+*
+* v0.3.1 12/03/2014 Change Directory is now operational although code is preventing '.' and '..'
+* from working. pwd, setpath and getpath have been tidied up and now work properly. The code was
+* almost the same as the initial get and closing set.
+*
+* v0.3.5 13/03/2014 Stage 3's basic functionality is now all in place and pwd has been altered
+* to refuse additional parameters.
+*
+* v0.4.0 13/03/2014 A quick change has been made to return errors to the user when too many/few
+* parameters are supplied to setpath/getpath/cd and pwd.
+*
+* v0.4.5 18/04/2014 cd has been altered in order to better handle the array. The function now
+* takes the whole array as input in order to prevent extraneous input, resulting in less unneeded code.
+*
+* v0.5 20/03/2014 perror() has been used to replace errors where the system encounters an error rather than
+* us wanting to restrict the user. Unnecessary debug code and commentary has been removed and the main
+* method has been rewritten from scratch to allow for the history to be implemented. History size has been added
+* to the header file. The '>' input prompt now includes the users current working directory to look more like a
+* standard Console Shell.
+*
+* v0.6 27/03/2014 History now stores the list of commands in an array and allows execution of these.
+* A bug #27 has been identified where 8 entries in console are needed before the history will begin
+* to allow execution however. This will be addressed in the next commit. Array is currently circular
+* with content being replaced from element 0 when it is full.
+*
+* v0.7.0 31/03/2014 Removed lots of unneeded commentary and added a struct for alias to use. History
+* has been altered to include a counter of positions in history, and the ability to load and
+* save from a hidden file called .hist_list has been implemented. This file is currently
+* stored in the /tmp directory.
+*
+* v0.7.3 02/04/2014 .hist_list is now stored in the users home directory instead of /tmp .
+* this change allows for the history to be permanently preserved and not deleted when /tmp is
+* purged.
+*
+* v0.8 09/04/2014 alias struct has been removed as we have decided to use a 2 dimensional array.
+* alias #22 and unalias #20 have been implemented and are now functional allowing adding and removing
+* of aliases. Invoking results in a Segmentation fault. Testing of full array has been done by pre-populating
+* alias list. 
+*
+* v0.8.5 09/04/2014 Parameters of aliasing have been altered to better fit the requirements of the specification.
+* Bug #27 had been resolve but has recurred in this version. Bug #28 (Segmentation Fault) in history has been
+* rectified. Excess spacing between functions was found to be the cause. Aliases can now be invoked and listed.
+* Test array code has been removed. Spelling misakes have also been addressed. Counters have been tided to be
+* easier to read. (Counter = counter +1 changed to counter++ etc).
+*
+* v0.8.8 14/04/2014 Refactored code to remove all non C90 -Wpedantic code and commentary. History and aliasing
+* now have their own functions with necessary parameters passed to them. Save history has also been moved
+* to a separate function and runlast has been removed from the code altogether as it is already implemented in
+* history. Version history has been updated and internal commentary is now up-to-date. 
+*
+* ==============================================================================================================*/
 
 /*
 main.c
