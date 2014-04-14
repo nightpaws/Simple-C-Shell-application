@@ -22,7 +22,7 @@
  *      Liam Diamond, Reg no: 201210681
  *
  * Group:
- *      Group 6
+ *      Thursday Group 6
  *
  * Promise: I confirm that this submission is all my own work.
  *
@@ -144,7 +144,7 @@
 /*
 main.c
 ACE4 v0.8.8
-Created by Group 6 on 14/04/2014.
+Created by Thursday Group 6 on 14/04/2014.
 Copyright (c) 2014 Group 6. All rights reserved.
 */
 
@@ -702,7 +702,7 @@ int main(int argc, char *argv[])
      working directory in the format of '/User/username >' and awaits user input. */
     
     printf("Simple Shell v0.8.8\n");
-    printf("Created by CS210 Group 6 on 14/04/2014\n");
+    printf("Created by CS210 Thursday Group 6 on 14/04/2014\n");
     printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University.\n All rights reserved.\n\n");
     
     /* Infinite Loop until highest break is reached. */

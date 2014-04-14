@@ -1,3 +1,31 @@
+/***************************************************************************************************************
+ *
+ * Filename: ace4.h
+ *
+ * Synopsis: Simple Shell Application Header
+ *
+ * This is the header file containing the crucial values for the operation of ace
+ * 
+ * Authors:
+ *      Craig Morrison, Reg no: 201247913
+ *	Stewart Key, Reg no: 201240385
+ *	Adam McGhie, Reg no: 201240207
+ *	Liam Diamond, Reg no: 201210681
+ *
+ * Group:
+ *     Thursday Group 6
+ *
+ * Promise: I confirm that this submission is all my own work.
+ *
+ *            (Craig Morrison)	__________________________________________
+ *               (Stewart Key)	__________________________________________
+ *               (Adam McGhie)	__________________________________________
+ *              (Liam Diamond)	__________________________________________
+ *
+ * Version: See ace4.c Revision History
+ *
+ **************************************************************************************************************/
+
 /*defining boolean values*/
 #define true 0
 #define false 1
