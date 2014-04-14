@@ -41,36 +41,165 @@
 
 /*
 main.c
-ACE4 v0.8.5
-Created by Group 6 on 13/04/2014.
+ACE4 v0.8.8
+Created by Group 6 on 14/04/2014.
 Copyright (c) 2014 Group 6. All rights reserved.
 */
+
+/*Included files which are required for the Simple Shell program to be able to run */
 #include <sys/types.h> /* pid_t */
 #include <sys/wait.h>  /* waitpid */
 #include <stdio.h> /* printf, perror */
 #include <string.h>
 #include <stdlib.h> /* exit */
 #include <unistd.h> /* _exit, fork */
-#include <errno.h>
+#include <errno.h> /* perror */
+#include "ace4.h" /*ACE4 header file with system critical values.*/
 
-#include "ace4.h" /*Our custom file*/
 
-/*Functions to be called when called by the users
- input matching the name of the function. These will
- contain the code. */
+/* On termination of the program the history is written out to a specified text file.
+ This function performs the write operation. */
+void writehistory(char* filename, char *history[max_hist]){
+    /* Initialise local variables and open the file in purge & write mode. */
+    FILE *filewrite;
+    int i;
+    filename = strcat(filename,"/.hist_list");
+    filewrite = fopen ( filename, "w" );
+    if (filewrite == NULL)
+    {
+        /* Inform the user if the file failed to open
+         (due to permission errors or otherwise), and terminate. */
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    /*Initialise counter */
+    i = 0;
+    
+    while(history[i] != 0){
+        /*Print each line of history into the text file, then 
+         close the reader when done */
+        fprintf(filewrite,"%s\n",history[i]);
+        i++;
+        if(i == max_hist){
+            break;
+        }
+    }
+    fclose ( filewrite );
+}
+
+/*This function is used to check input against the history and handles input such as '!!' and
+ '!<no>' which are required to re-run previously executed commands from history.*/
+int historycheck(char input[inputval], int histcounter, char *history[max_hist]){
+    /* This if statement prevents inputs which are line breaks being entered into the history. */
+    if(strstr(input,"\n")){
+    }
+    else{
+        /* If the program passes this if statement, the first char in the input is a ! or the input is "history" */
+        if(strncmp("!", input, 1) != 0 && strncmp("history", input, 512) != 0 ){
+            
+            /* When array is full, move each element in the array down one location. */
+            if(histcounter == max_hist){
+                int i = 0;
+                while(i<(histcounter-1)){
+                    history[i] = history[i+1];
+                    i++;
+                }
+                /* Add the new element to history. */
+                history[(max_hist-1)] = strdup(input);
+            }
+            else{
+                /* Add the new element to history straight away. Then increment counter */
+                history[histcounter] = strdup(input);
+                histcounter = histcounter + 1;
+            }
+        }
+        else{
+            /* Checks if input is to run the last command. (!!) If so, then execute it,
+             or display an error if there is no history to run. */
+            if(strncmp("!!", input, 512) == 0){
+                if(history[0] != 0){
+                    if(histcounter == 0){
+                        strcpy(input,history[19]);
+                    }
+                    else{
+                        strcpy(input,history[histcounter-1]);
+                    }
+                }
+                else{
+                    printf("There is no history to run\n");
+                }
+            }
+            else{
+                long length = strlen(input);
+                if (length > 1){
+                    int location = atoi(&input[1]); /* Converts char to int. */
+                    if(location>0 && location <21){
+                        location = location - 1;
+                        if(history[location] != NULL){
+                            /* Because the history command prints out from most to last recent, this converts the users
+                             input into an array location, as !1 would be location in an full array. */
+                            if((histcounter-location) < 0){
+                                location = (max_hist - (histcounter-(location+1)));
+                            }
+                            else{
+                                location = (histcounter-(location+1));
+                            }
+                            /* The command from history is copied into input overwriting the previous command.
+                             The command is displayed before it runs. */
+                            strcpy(input,history[location]);
+                            printf("%s\n",input);
+                        }
+                    }
+                    else{
+                        if(location != 0){
+                            /*If the user enters a number outwith the range then they are
+                              prompted to change their number */
+                            printf("The character following ! must be a number between 1 and 20 to invoke a history command\n");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return histcounter;
+}
+
+
+/* The following functions will be called by the internal command selector. Each will execute accordingly and return to the main method once completed */
+
+/* This function checks to see if the input value it is provided with is containted within the list of aliases
+ stored in the program. If they exist then the provided input is replaced with the alias value.*/
+void checkalias(char input[inputval],char *alias[max_alias][2]){
+    int i;
+    for(i = 0;i<10;i++){
+        if(alias[i][0]!=NULL){
+            if(strcmp(input,alias[i][0])==0){
+                /* If the command is found in aliases then copy
+                 the aliased command in place of the input. */
+                strcpy(input, alias[i][1]);
+                break;
+            }
+        }
+    }
+}
+
+
+/* Change Directory allows naviagtion of the computer system by providing the function with folder names and
+ a select few additional commands such as cd with no parameters and 'cd ..' to navigate up one layer in the system. */
 void cd(char input[inputval],char *tokens[]){
     if(tokens[1] == NULL){
-	/*change directory to home*/
+	/* Change directory to the users Home directory, or display an error if this fails.*/
     	if(chdir(getenv("HOME")) == 0){}
         else{
 		perror(getenv("HOME"));
         }
     }
-    else if (tokens[2]!= NULL){
+    else if (tokens[2]!= NULL){ /*Warn the user if too many parameters are given and stop executing the cd command*/
         printf("Too many parameters supplied\n");
     }
     else {
-	/*change directory to user specified location*/
+	/* Change directory to user specified location. Display an error if this does not succeed. */
         if(chdir(tokens[1]) == 0){
         }
         else
@@ -81,9 +210,13 @@ void cd(char input[inputval],char *tokens[]){
     
 }
 
+
+/*Attempts to obtain the current working directory from the system and stores it in a character array. This
+ function does not take parameters and informs the user should they attempt to use them. When invoked
+ it displays the current working directory. */
 void pwd(char *tokens[]){
-        char cwd[256]; /*current working directory*/
-    if (getcwd(cwd, sizeof(cwd)) == NULL){
+        char cwd[256]; /* Current working directory. */
+    if (getcwd(cwd, sizeof(cwd)) == NULL){ /* If unable to get cwd display an error */
             perror("getcwd() error");
     }
     else if (tokens[1]!= NULL){
@@ -94,6 +227,9 @@ void pwd(char *tokens[]){
     return;
 }
 
+
+/* A short method to get and display the current environment to the user with a check 
+ to prevent use of unnecessary parameters. */
 void getpath(char *tokens[]){
     
     if (tokens[1]!= NULL){
@@ -101,33 +237,37 @@ void getpath(char *tokens[]){
     }
     else
     printf("The current path is: %s\n",getenv("PATH"));
-    
-
-    
-    
     return;
 }
 
+
+/* This function sets a new environment for the application to use. It includes checks to prevent excessive
+ parameter usage and requires a single path name to be input. */
 void setpath(char *tokens[]){
     if(tokens[1] != NULL){
-	if(tokens[2] == NULL){
-	    	printf("New path will be : %s\n",tokens[1]);
-                if(setenv("PATH",tokens[1],1) == 0){
-			printf("Successfully changed path\n");
-			}
-                else{			printf("Invalid path specified\n");
-			}
-	}
-	else{
-	printf("Error: You have too many parameters\n");
-	}
+        if(tokens[2] == NULL){
+            printf("New path will be : %s\n",tokens[1]);
+            if(setenv("PATH",tokens[1],1) == 0){
+                printf("Successfully changed path\n");
+            }
+            else{
+                printf("Invalid path specified\n");
+            }
+        }
+        else{
+            printf("Error: You have too many parameters\n");
+        }
     }
     else{
-	printf("Error: You need to include a path\n");
+        printf("Error: You need to include a path\n");
     }
     return;
 }
 
+
+/* History displays to the user the last 20 commands they entered with numbering next to each element.
+ By typing ! and the number in the form !<no> the user can execute these commands. This function 
+ however exists solely to display those commands to the user. */
 void history(char *tokens[], char *history[], int histcounter){
     int j = 0;
     if(tokens[1] == 0){
@@ -135,7 +275,7 @@ void history(char *tokens[], char *history[], int histcounter){
             printf("History is empty\n");
 	    }
     	else{
-            /* this for loop finds out where the latest addition to the array is */
+            /* This for loop finds out where the latest addition to the array is. */
 		    int k = 0;
 		    while(history[k] != 0){
                 k++;
@@ -144,7 +284,7 @@ void history(char *tokens[], char *history[], int histcounter){
                 }
 		    }
 		    
-		    /*Prints out the recent history, prints most recent command as 1. least recent as higher number*/
+		    /* Prints out the recent history, with the most recent command as element 1. Less recent as incrementations of 1. */
 		    while(history[j] != 0){
                 printf("%d. %s\n",(k),history[j]);
                 j++;
@@ -156,29 +296,40 @@ void history(char *tokens[], char *history[], int histcounter){
     	}
     }
     else{
+        /*If history is given parameters it will not execute 
+         and instead the user is prompted not to give such input */
         printf("History does not take parameters\n");
     }	
     return;
 }
 
 
-void runlast(char *tokens[max_args], char *history[max_hist]){
-    /* TODO add in special case for !! commands*/
-    printf("runlast has been selected\n");
-    return;
-}
+/* The alias function allows the user to assign command names of their own to operations to make
+ them less time consuming when used repeatedly. This is especially useful when dealing with long commands
+ with lots of parameters which can be shortened to a single word. This function takes two inputs but an unlimited
+ number of parameters may be applied to the second parameter up to the character limit specified in the ace4.h file. */
 
 void alias(char *tokens[max_args], char *alias[max_alias][2]){
+    /* Partially initialise local variables. */
 	int i;
-	int nullCounter = 0; 
-	for (i = 0; i < max_alias; i++){     //works out the number of null elements in the alias array
+	int nullCounter = 0;
+    char* command;
+    char command2[512] = "";
+    int tokensCounter;
+    int index;
+    bool exists;
+    
+    /* Works out the number of null elements in the alias array. */
+	for (i = 0; i < max_alias; i++){
 		if(alias[i][0] == NULL){
 			nullCounter = nullCounter + 1;
 		}
 	}
-	if (tokens[1] == NULL){				// if only 'alias' is entered...
+    
+    /* If only 'alias' is entered the program responds with a list of aliases, or outputs a message explianing no aliases exist yet. */
+	if (tokens[1] == NULL){
 		if(nullCounter == max_alias){
-			printf("There are no aliases added \n");
+			printf("There are no aliases to list\n");
 		}
 		else{
 			for (i = 0; (i < (max_alias-nullCounter)); i++){
@@ -188,27 +339,35 @@ void alias(char *tokens[max_args], char *alias[max_alias][2]){
 		return;
 	}
 	else{
+        /* If no command to alias is given then a message is shown to the user prompting for the additional paramater of a command */
 		if(tokens[2] == NULL){
 			printf("Error: Incorrect parameters provided to alias. Specify <command2>\n");
 			return;
 		}
-		char* command = tokens[1];
-		char command2[512] = "";
-		int tokensCounter = 0;
-		int index;
-		int i;
-		bool exists = false;
+        
+        /* Variables are now fully initialised for use in processing. */
+		command = tokens[1];
+		tokensCounter = 0;
+		index = 0;
+		i = 0;
+		exists = false;
 		
-		while (tokens[tokensCounter] != NULL){		// works out the number of tokens in the token array
+        /* The number of tokens in the array is counted. */
+		while (tokens[tokensCounter] != NULL){
 			tokensCounter ++;
 		}
 		
-		for (index = 2; index < tokensCounter; index++){	// concatenates all the tokens (except 'alias' and <command1>)
+        /* Concatenates all the tokens (except 'alias' and <command1>) to construct the command to be stored. */
+		for (index = 2; index < tokensCounter; index++){
 			strcat(command2, tokens[index]);
 			strcat(command2, " ");
 		}
+        
+        /* Appends a null character to the end of the string to allow chosen commands to
+         appear the same as a normal command when called. */
 		strcat(command2, "\0");
 		
+        /*Check the list of existing aliases. If the alias already exists, then overwrite it. */
 		for (i = 0; (i < (max_alias-nullCounter)); i++){
 				if(strcmp(command, alias[i][0]) == true){
 					printf("Alias already exists. Overwriting.\n");
@@ -216,11 +375,14 @@ void alias(char *tokens[max_args], char *alias[max_alias][2]){
 					exists = true;
 				}
 		}
+        
+        /* If the alias does not exist and there is no room to add one, then inform the user of the failure. */
 		if((nullCounter == 0) && (exists == false)){
 			printf("No more aliases can be added \n");
 		}
 		else{
-			if ((exists == false)&&(nullCounter != 0)){	//add new alias to the Array
+            /* Otherwise add the new alias to the Array if it does not already exist. */
+			if ((exists == false)&&(nullCounter != 0)){
 				alias[max_alias-nullCounter][0] =strdup(command);
 				alias[max_alias-nullCounter][1] =strdup(command2);
 			}
@@ -229,18 +391,35 @@ void alias(char *tokens[max_args], char *alias[max_alias][2]){
     return;
 }
 
-void unalias(char *tokens[max_args], char *alias[max_alias][2]){
 
+/* Unalias attempts to remove the alias passed to it from the list of aliases. It rejects excessive
+ parameters or notifies if too few are provided. A correct command should be of the form 'unalias <alias> */
+void unalias(char *tokens[max_args], char *alias[max_alias][2]){
+    int i;
+	int index;
+    char* command;
+    bool found;
+    
+    /* Perform simple validation of parameters. */
 	if (tokens[1] == NULL){
 		printf("Error: No alias provided. \n");
 		return;
 	}
 	
-	int i;
-	int index;
-	char* command = tokens[1];
-	bool found = false;
-	for (i = 0; i < max_alias; i++){			// go through array to find alias
+    if(tokens[2]!=NULL){
+        printf("Error: Too many values provided. \n");
+		return;
+    }
+    
+    /* The command that is to be unaliased is assigned a to the command value.
+     The boolean value found is also initialised here. */
+	command = tokens[1];
+	found = false;
+    
+    /* The program searches throguh the array to find the alias stated. If it is found then both
+     the alias and it's target are reset to NULL values and the found indicator is set to true with
+     a pointer to the, now empty, alias stored in memory as 'i'. */
+	for (i = 0; i < max_alias; i++){
 		if (alias[i][0] != NULL){
 			if(strcmp(command, alias[i][0]) == true){
 				alias[i][0] = NULL;
@@ -251,13 +430,17 @@ void unalias(char *tokens[max_args], char *alias[max_alias][2]){
 		}
 
 	}
+    
+    /*If the found indicator has not been triggered then the user is informed that their alias was not found,
+     and returned to the main program, otherwise the alias list needs to be updated to remove the space
+     created by the removed element. */
 	if (found == false){
 		printf("Error: The alias does not exist. \n");
 		return;
 	}
 	else{
 		while(index<(max_alias-1)){					
-			alias[index][0] = alias[index+1][0];		//shift array so there are no gaps
+			alias[index][0] = alias[index+1][0];		/* shift array so there are no gaps */
 			alias[index][1] = alias[index+1][1];
 			index++;
 		}
@@ -266,6 +449,13 @@ void unalias(char *tokens[max_args], char *alias[max_alias][2]){
 	}
     return;
 }
+
+/*The following two functions, Command_Selector and tokenizer are two critical functions required for any and all functionality */
+
+/* The Command Selector exists to direct tokenised inputs to their designated function. This function allows
+ for System commands to be executed by the application and for internal commands such as changing directory to
+ be possible through use of if statements and forking to execute external commands (Which would otherwise terminate
+ the program on execution). This implementation ensures that only the forked programs are terminated.*/
 
 void command_selecter(char input[inputval], char *tokenArray[max_args], char *histArray[max_hist], int histcounter, char *aliasArray[max_alias][2]){
 
@@ -289,10 +479,6 @@ void command_selecter(char input[inputval], char *tokenArray[max_args], char *hi
     {
         history(tokenArray,histArray,histcounter);
     }
-    else if(strcmp("!!",tokenArray[0])==true)
-    {
-        runlast(tokenArray,histArray);
-    }
     else if(strcmp("alias",tokenArray[0])==true)
     {
 		alias(tokenArray,aliasArray);
@@ -302,222 +488,167 @@ void command_selecter(char input[inputval], char *tokenArray[max_args], char *hi
         unalias(tokenArray,aliasArray);
     }
     else {
+        /* If the input does not comply with the structure of a system command, then
+        treat it as a system command and fork a new thread. Invalid commands are treated
+         in this manner too. After execution the threads terminate and return to
+         the control to the main thread. */
         pid_t pid;
         pid = fork();
         
         if (pid == -1) {
-            /* If the fork() returns -1, an error has occurred. */
+            /* If the fork() returns -1 then an error has occurred and the user is informed. */
             perror("Failed to fork process");
             exit(EXIT_FAILURE);
         }
         else if (pid == 0) {
-            /* If fork() returns 0, we are in the child process. */
+            /* If fork() returns 0, we are in the child process and can execute the system command. */
             if(execvp(tokenArray[0],tokenArray) == -1 ){
                 printf("%s: Command not found\n",tokenArray[0]);
             }
-            exit(2);	/* execl() failed */
+            exit(2); /*Terminate the fork */
         }
         else {
-           /* When fork() is positive. We're in the parent process */
+           /* When the fork() is positive. We are in the parent process. */
             int status;
             (void)waitpid(pid, &status, 0);
-            /* return value is PID of new child process */
+            /* return value is Process ID of the child process. */
         }
     }
 }
 
-    
+
+/* Tokenizer takes the user input and converts that into an array of tokens which
+ are used by the command selector to execute the actions specified by the user. It
+ splits the user input into individual strings whenever specific symbols are used
+ and returns the updated array. */
 char** tokenizer(char input[inputval], char *array[max_args]){
-       char *inputstrings; /*current value to be tokenised*/
-       int i = 0; /*tokeniser*/
+    char *inputstrings; /* Current value to be tokenised. */
+    int i = 0; /* Tokenizer counter. */
 
-        /*take in the input, tokenise and store first
-         tokenised value in the array*/
-        inputstrings = strtok(input, "<>| \n\t");
+    /* Take in the input, tokenise it and store first
+     tokenised value in the array. */
+    inputstrings = strtok(input, "<>| \n\t");
 
-        array[0] = inputstrings;
+    array[0] = inputstrings;
     
-        /*Whilst not the end of the file and input isn't null, take
-         in the input, tokenise and store first tokenised value
-         in the array*/
-        while(inputstrings != NULL && !feof(stdin)){
-            i++;
-            inputstrings = strtok(NULL,"<>| \n\t");
-            array[i] = inputstrings;
-        }
-        return array;
+    /* Whilst not at the end of the file and while the input
+     is not NULL, take in the input, tokenise and store the
+     current tokenised value in the array*/
+    while(inputstrings != NULL && !feof(stdin)){
+        i++;
+        inputstrings = strtok(NULL,"<>| \n\t");
+        array[i] = inputstrings;
+    }
+    
+    /*Return the resulting tokenised array*/
+    return array;
 }
+
 
 int main(int argc, char *argv[])
 {
-    printf("Simple Shell v0.8.5\n");
-    printf("Created by CS210 Group 6 on 13/04/2014\n");
-    printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University. All rights reserved.\n\n");
-    char *history[max_hist] = {0}; /* History array */
+    /* Declaring, and where necessary, initialising of main variables which will be used repeatedly throughout the program.
+     These will hold important values such as user inputs, the initial path. The name and location of the history file,
+     and any aliases that are used during execution. */
+    
+    char *history[max_hist] = {0};
     int histcounter = 0;
-    char *array[max_args];/* Size 50 */
-    bool terminate = false; /* Always false */
-    char input[inputval];    /* Size 512 */
-    char *originalPath; /* To hold current directory at beginning of execution */
+    char *array[max_args];
+    bool terminate = false;
+    char input[inputval];
+    char *originalPath;
     char cwd[256];
-	char *alias[max_alias][2] = {{0}}; /* 2 dimensional array to hold aliases*/
-    /* Store the original path*/
+	char *alias[max_alias][2] = {{0}};
+    char *filename;
+    FILE *fileread;
+    char inputunchanged[inputval];
+    int i;
+    
+    /* Store the original path for retrieval at the end of the program. */
     originalPath = getenv("PATH");
+
     
-    
-    /* Set working directory to the home folder*/
+    /* Set the current working directory to be the home folder defined by the Operating System. */
     chdir(getenv("HOME"));
     
-    /*Restore history from file*/
-    char *filename = strcat(getcwd(cwd,sizeof(cwd)),"/.hist_list");  /*Set history file to be from home directory*/
-    FILE *fileread = fopen ( filename, "r" );
-    if (!fileread==true)
+    /* This part of the program opens the history containted in a hidden text file named .hist_list which is located
+     in the host computers home directory. If the filed does not exist then it is created during the applications
+     termination sequence. The contents of the history file are loaded into the 'history' array which is able to
+     hold the last 20 commands entered by the user. */
+    
+    filename = strcat(getcwd(cwd,sizeof(cwd)),"/.hist_list");
+    fileread = fopen ( filename, "r" );
+    if (!fileread==true) /* If there is a file called .hist_list present. */
     {
         char line [512];
- 
-        while ( (fgets ( line, sizeof line, fileread ) != NULL) && (histcounter < 20)) // read a line
+        while ( (fgets ( line, sizeof line, fileread ) != NULL) && (histcounter < 20)) /* Read line from history. */
         {
-            history[histcounter] = strdup(strtok(line,"\n"));
+            history[histcounter] = strdup(strtok(line,"\n")); /* Remove the line break and add line to history array. */
             histcounter++;
         }
-    	fclose ( fileread );
+    	fclose ( fileread ); /* Close the file reader. */
     }
     else
     {
-	printf("No previous history exists, a new history will be created upon exit.\n");
+    /* If no file is found, informs the user accordingly. */
+	printf("No previous history exists, a new history will be created upon exit.\n\n");
 
     }
     
-    /* Infinite Loop until highest break is reached*/
+    /* After an attempt has been made to load the history, execution of the main program commences. The terminal
+     information is displayed and a loop prompts the user for input whilst persistently displaying their current
+     working directory in the format of '/User/username >' and awaits user input. */
+    
+    printf("Simple Shell v0.8.8\n");
+    printf("Created by CS210 Group 6 on 14/04/2014\n");
+    printf("Copyright (c) 2014 CS210 Group 6, Strathclyde University.\n All rights reserved.\n\n");
+    
+    /* Infinite Loop until highest break is reached. */
     do {
         printf("%s >",getcwd(cwd, sizeof(cwd)));
         
-        /* get the input and if it is not null tokenise it */
+        /* If the current input is not NULL then the user input is tokenised
+         to remove the trailing newline character. */
         if((fgets(input, in_size, stdin)!=NULL)){
             strtok(input,"\n");
             
-            char inputunchanged[inputval];
-            int i;
+            /* The current value of input is stored in a new character array titled
+             inputunchanged for use later when changing directory. */
             for (i=0;i<sizeof(input);i++){
                 inputunchanged[i] = input[i];
             }
             
-            /* If the input from the user is "exit" then
-             begin termination of the program */
+            /* If the input from the user is "exit" then begin termination
+             of the program by breaking out of the do-while loop. */
             if(strcmp("exit",input)==true){
                 break;
             }
             else{
-                if(strstr(input,"\n")){
-                }
-                else{
-                    /* If this returns 0, the first char in the input is a ! or the input is "history" */
-                    if(strncmp("!", input, 1) != 0 && strncmp("history", input, 512) != 0 ){
-                        
-                        /*When array is full, moves everything in array one location down */
-                        if(histcounter == max_hist){
-                            int i = 0;
-                            while(i<(histcounter-1)){
-                                history[i] = history[i+1];
-                                i++;
-                            }
-                            history[(max_hist-1)] = strdup(input);
-                        }
-                        else{
-                            history[histcounter] = strdup(input);
-                            histcounter = histcounter + 1;
-                        }
-                    }
-                    else{
-                        /*Checks if input is to run last command */
-                        if(strncmp("!!", input, 512) == 0){
-                            if(history[0] != 0){
-                                if(histcounter == 0){
-                                    strcpy(input,history[19]);
-                                }
-                                else{
-                                    strcpy(input,history[histcounter-1]);
-                                }
-                            }
-                            else{
-                                printf("There is no history to run\n");
-                            }
-                        }
-                        else{
-                            long length = strlen(input);
-                            if (length > 1){
-                                int location = atoi(&input[1]); /*Converts char to int */
-                                if(location>0 && location <21){
-                                    location = location - 1;
-                                    if(history[location] != NULL){
-                                        /*Because the history command prints out from most to last recent, this converts the users 
-                                         input into an array location, as !1 would be location in an full array */
-                                        if((histcounter-location) < 0){
-                                            location = (max_hist - (histcounter-(location+1)));
-                                        }
-                                        else{
-                                            location = (histcounter-(location+1));
-                                        }
-                                        strcpy(input,history[location]);
-                                        printf("History command is: %s\n",input);
-                                    }
-                                    else{
-                                        printf("There is no command in this array location\n");
-                                    }
-                                }
-                                else{
-                                    printf("The character following ! must be a number between 1 and 20\n");
-                                }
-                            }
-                        }
-                    }
-                }
-            
-                /*Handle the aliasing--------------*/
-                int i;
-                for(i = 0;i<10;i++){
-                    if(alias[i][0]!=NULL){
-                        if(strcmp(input,alias[i][0])==0){
-                            /*command found in aliases*/
-                            
-                            strcpy(input, alias[i][1]);
-                            //input = alias[i][1];
-                            break;
-                        }
-                    }
-                }
-                    tokenizer(input, array);
-
+                /* Process the users input by firstly checking to see whether it corresponds to a command which can
+                 be executed from the history. The resulting value of this check is then compared against aliases,
+                 and finally tokenised. The result of these three functions is a command which can be understood and
+                 handled by the command selector. */
+                
+                histcounter = historycheck(input, histcounter, history);
+                checkalias(input, alias);
+                tokenizer(input, array);
+                
+                /* If the command passed on after tokenizing is a NULL value then it is not
+                  passed to the command selector and is instead disregarded. */
                 if(array[0] !=NULL){
                 	command_selecter(inputunchanged,array,history,histcounter,alias);
                 }
             }
         }
         else
-        /* Jump out of while loop*/
-            break;
-        
+            break; /* Exit the while loop and begin termination sequence. */
     } while (terminate ==false);
     
-    /*Write out history to file*/
-    filename = strcat(filename,"/.hist_list");
-    FILE *filewrite = fopen ( filename, "w" );
-    if (filewrite == NULL)
-    {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-    int i = 0;
-    while(history[i] != 0){
-        fprintf(filewrite,"%s\n",history[i]);
-        i++;
-        if(i == max_hist){
-            break;
-        }
-    }
-    fclose ( filewrite );
+    /* Write out history to text file.*/
+    writehistory(filename,history);
     
-    /**getsetenv here and on exit*/
+    /* Restore the original path for the user when exiting the program
+     and display the change to the user showing their new path.*/
     setenv("PATH",originalPath,1);
     printf("\n\nPath on leaving program: %s\n",getenv("PATH"));
     printf("\n\nTerminated Execution.\n\n");
