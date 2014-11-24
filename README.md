@@ -1,6 +1,6 @@
-scaling-octo-avenger
+fuzzy-octo-computing-machine
 ====================
 
-Simple Shell Program
+A group project for my Second Year Computer Science Lab. More detail can be found within the files
 
-Thursday, Group 6, CS210
+Thursday, Group 6, CS/210
